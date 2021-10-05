@@ -8,4 +8,8 @@ you to like-minded individuals with similar goals or interests. Power will provi
 fitness app requires (workout plans/planners, diet plans/planners, exercise tutorials and fitness
 knowledge that anyone can benefit from) and more.
 
+Power shall be developed with the Bottom-Up Design methodology: specifying the primitive operations first,
+combining them later into larger units, ultimately solving the problem.
+
+
 
