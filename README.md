@@ -1,4 +1,4 @@
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Strength In Numbers: Improve. Connect. Learn.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+***Strength In Numbers: Improve. Connect. Learn.***
 
 Strength in Numbers is an application designed to assist in increasing physical activity in it's users through the use of novel extrinsic motivators and features.
 Strength in Numbers aims to succeed at this by implementing the following features:
