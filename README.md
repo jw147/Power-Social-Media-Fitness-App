@@ -1,11 +1,8 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Strength In Numbers: Improve. Connect. Learn.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Strength In Numbers is a social media fitness app that ranks users based on their experience, age, weight & ability
-creating a way for users to linearly track their progress from a person to person basis.
-Users can use the app to compete with friends or meet new groups of people.
+Strength in Numbers is an application designed to assist in increasing physical activity in it's users through the use of novel extrinsic motivators and features.
+Strength in Numbers aims to succeed at this by implementing the following features:
+- Creating a social environment that allows users to interact with each other; competing, supporting and learning from one another
+- Log and Track your own progress within your exercises and your diet
+- Learn new ways to exercise and plan your meals
 
-The aim of Strength In Numbers is to create a beginner friendly health & fitness app that connects 
-you to like-minded individuals with similar goals or interests. Strength In Numbers will provide everything that a
-fitness app requires (workout plans/planners, diet plans/planners, exercise tutorials and fitness
-knowledge that anyone can benefit from) and more.
-
-
+Strength in Numbers will be a beginner friendly app with a user friendly interface allowing you to use it as the tool it was designed to be.
