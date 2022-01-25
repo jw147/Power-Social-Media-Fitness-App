@@ -1,0 +1,74 @@
+{
+    "weights": {
+        "back":[
+                {"name": "Lat Pulldown", "group": "Upper Back"},
+                {"name": "Pull Ups", "group": "Upper Back"},
+                {"name": "Seated Rows", "group": "Upper Back"},
+                {"name": "Barbell Bent-Over Rows", "group": "Upper Back"},
+                {"name": "Dumbbell Bent-Over Rows", "group": "Upper Back"},
+                {"name": "Cable Pulldown", "group": "Upper Back"},
+
+                {"name": "Deadlift", "group": "Lower Back"},
+                {"name": "Romanian Deadlift", "group": "Lower Back"},
+                {"name": "Good Morning", "group": "Lower Back"},
+                {"name": "Back Extension", "group": "Lower Back"}
+        ],
+        
+        "biceps": [
+            {"name": "Standing Bicep Curl"},
+            {"name": "Seated Bicep Curl"},
+            {"name": "Standing Hammer Curl"},
+            {"name": "Seated Hammer Curl"},
+            {"name": "Preacher Curl"},
+            {"name": "Rope Hammer Curl"},
+            {"name": "Incline Bicep Curl"},
+            {"name": "Incline Hammer Curl"},
+            {"name": "Barbell Curl"},
+            {"name": "21s"},
+            {"name": "Arnold Curl"},
+            {"name": "Cross-Body Hammer Curl"}
+        ],
+        "triceps": [
+            {"name": "Dumbbell Skull Crushers"},
+            {"name": "Barbell Skull Crushers"},
+            {"name": "Tricep Kickbacks"},
+            {"name": "Close Grip BenchPress"},
+            {"name": "Diamond Pushups"},
+            {"name": "Tricep Dips"},
+            {"name": "Overhead Tricep Extensions"},
+            {"name": "Rope Pushdowns"},
+            {"name": "Bar Pushdowns"}
+        ],
+        "chest": [
+            {"name": "Barbell Bench Press"},
+            {"name": "Dumbell Bench Press"},
+            {"name": "Incline Barbell Bench Press"},
+            {"name": "Incline Dumbbel Bench Press"},
+            {"name": "Decline Barbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Chest Press (Machine)"},
+            {"name": "Dumbbell Flies"},
+            {"name": "Cable Flies"},
+            {"name": "Dips"},
+            {"name": "Pushups"}
+        ],
+        "shoulders": [
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"},
+            {"name": "Decline Dumbbell Bench Press"}
+        ],
+        "legs": [
+
+        ]
+    }
+  }
+  
