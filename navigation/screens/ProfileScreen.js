@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useContext} from 'react'
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, Row, Alert, Pressable, ImageBackground } from 'react-native'
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Row, Alert, Pressable, ImageBackground } from 'react-native'
 import { auth } from '../../firebase'
 import { useNavigation } from '@react-navigation/core'
 import firebase from 'firebase/compat';
@@ -15,78 +15,6 @@ export default function ProfileScreen({navigation}){
     const [userName, setUserName] = useState('')
     const [displayName, setDisplayName] = useState('')
     const [Bio, setBio] = useState('')
-
-    const [image, setImage] = useState('');
-
-
-    let imageRef = getDownloadURL(ref(getStorage(), "images/" + currentUser.uid));
-    
-    imageRef
-    .then((url) => {
-            setImage(url);
-    })
-    .catch((e) => console.log('getting downloadURL of image error => ', e));
-
-    const pickImage = async () => {
-        // No permissions request is necessary for launching the image library
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.All,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
-        });
-        console.log(result);
-            handleImagePicked(result);
-        
-    };
-
-    async function handleImagePicked(pickerResult){
-        try {
-          //setState({ uploading: true });
-    
-          if (!pickerResult.cancelled) {
-            uploadImageAsync(pickerResult.uri);
-            //setState({ image: uploadUrl });
-          }
-        } catch (e) {
-          console.log(e);
-          alert("Upload failed, sorry :(");
-        } finally {
-          console.log("finished uploading");
-        }
-      };
-    
-    async function uploadImageAsync(uri) {
-        // Why are we using XMLHttpRequest? See:
-        // https://github.com/expo/expo/issues/2402#issuecomment-443726662
-        const blob = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-                resolve(xhr.response);
-            };
-            xhr.onerror = function (e) {
-                console.log(e);
-                reject(new TypeError("Network request failed"));
-            };
-            xhr.responseType = "blob";
-            xhr.open("GET", uri, true);
-            xhr.send(null);
-        });
-
-        const fileRef = ref(getStorage(), "images/" + currentUser.uid);
-        const result = await uploadBytes(fileRef, blob);
-
-        // We're done with the blob, close and release it
-        blob.close();
-        let imageRef = getDownloadURL(ref(getStorage(), "images/" + currentUser.uid));
-
-        imageRef
-            .then((url) => {
-                setImage(url);
-            })
-            .catch((e) => console.log('getting downloadURL of image error => ', e));
-        return await getDownloadURL(fileRef);
-    }    
 
     function getUserName(documentSnapshot) {
         return documentSnapshot.get('username');
@@ -132,6 +60,78 @@ export default function ProfileScreen({navigation}){
                 setBio(bio);
             }
         });
+
+    const [image, setImage] = useState('');
+
+
+    let imageRef = getDownloadURL(ref(getStorage(), "images/" + currentUser.uid));
+    
+    imageRef
+    .then((url) => {
+            setImage(url);
+    })
+    .catch((e) => console.log('getting downloadURL of image error => ', e));
+
+    const pickImage = async () => {
+        // No permissions request is necessary for launching the image library
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0,
+        });
+            handleImagePicked(result);
+        
+    };
+
+    async function handleImagePicked(pickerResult){
+        try {
+          //setState({ uploading: true });
+    
+          if (!pickerResult.cancelled) {
+            uploadImageAsync(pickerResult.uri);
+            //setState({ image: uploadUrl });
+          }
+        } catch (e) {
+          console.log(e);
+          alert("Upload failed, sorry :(");
+        } finally {
+          console.log("exitHandleImage");
+        }
+      };
+    
+    async function uploadImageAsync(uri) {
+        // Why are we using XMLHttpRequest? See:
+        // https://github.com/expo/expo/issues/2402#issuecomment-443726662
+        const blob = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                resolve(xhr.response);
+            };
+            xhr.onerror = function (e) {
+                console.log(e);
+                reject(new TypeError("Network request failed"));
+            };
+            xhr.responseType = "blob";
+            xhr.open("GET", uri, true);
+            xhr.send(null);
+        });
+        const fileRef = ref(getStorage(), "images/" + currentUser.uid);
+        const result = await uploadBytes(fileRef, blob);
+
+        // We're done with the blob, close and release it
+        blob.close();
+        let imageRef = getDownloadURL(ref(getStorage(), "images/" + currentUser.uid));
+
+        imageRef
+            .then((url) => {
+                setImage(url);
+            })
+            .catch((e) => console.log('getting downloadURL of image error => ', e));
+        return await getDownloadURL(fileRef);
+    }    
+
+    
         
     
     return(
