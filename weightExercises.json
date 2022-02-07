@@ -41,7 +41,7 @@
         ],
         "chest": [
             {"name": "Barbell Bench Press"},
-            {"name": "Dumbell Bench Press"},
+            {"name": "Dumbbell Bench Press"},
             {"name": "Incline Barbell Bench Press"},
             {"name": "Incline Dumbbel Bench Press"},
             {"name": "Decline Barbell Bench Press"},
@@ -53,21 +53,38 @@
             {"name": "Pushups"}
         ],
         "shoulders": [
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"},
-            {"name": "Decline Dumbbell Bench Press"}
+            {"name": "Seated Dumbbell Military Press"},
+            {"name": "Dumbbell Lateral Raises"},
+            {"name": "Cable Lateral Raises"},
+            {"name": "Front Raises"},
+            {"name": "Rope Face-Pulls"},
+            {"name": "Barbell Military Press"},
+            {"name": "Arnold Press"}
         ],
         "legs": [
-
+            {"name": "Barbell Squat"},
+            {"name": "Goblet Squat"},
+            {"name": "Bulgarian Split Squat"},
+            {"name": "Wall Sit"},
+            {"name": "Leg Press"},
+            {"name": "Incline Leg Press"},
+            {"name": "Hamstring Curls"},
+            {"name": "Lunges"},
+            {"name": "Calf Raises"},
+            {"name": "Glute Bridges"},
+            {"name": "Hip Abductor Machine"},
+            {"name": "Hip Adductor Machine"}
+        ],
+        "abs": [
+            {"name": "Sit Ups"},
+            {"name": "Crunches"},
+            {"name": "Butterfly Kicks"},
+            {"name": "Plank"},
+            {"name": "Side Plank"},
+            {"name": "V Sit"},
+            {"name": "Leg Raises"},
+            {"name": "Hanging Leg Raises"},
+            {"name": "Crunch Machine"}
         ]
     }
   }

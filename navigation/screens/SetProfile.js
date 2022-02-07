@@ -48,6 +48,10 @@ export default function SetProfile({navigation}){
     const [usernameInput, setUsername] = React.useState('');
     const [displaynameInput, setDisplayname] = React.useState('');
     const [bioInput, setBio] = React.useState('');
+    const [weightInput, setWeight] = React.useState('');
+    const [goalsInput, setGoals] = React.useState('');
+    const [ageInput, setAge] = React.useState('');
+    const [genderInput, setGender] = React.useState('');
 
     var Email;
 
@@ -63,7 +67,7 @@ export default function SetProfile({navigation}){
         });
 
     const updateDatabase = () => {
-        if(usernameInput === '' || displaynameInput === ''){
+        if(usernameInput === '' || displaynameInput === '' || weightInput === '' || ageInput === '' || genderInput === '' || goalsInput === ''){
             alert("Please enter your details");
         }else{
             firebase.firestore()
@@ -74,6 +78,10 @@ export default function SetProfile({navigation}){
                     displayname: displaynameInput,
                     email: Email,
                     bio: bioInput,
+                    age: ageInput,
+                    gender: genderInput,
+                    weight: weightInput,
+                    goals: goalsInput
                 })
                 .then(() => {
                     console.log('User Info Updated');
@@ -88,7 +96,7 @@ export default function SetProfile({navigation}){
         style={styles.container}
             behavior="padding"
         >
-            <View style={styles.container}>
+            <ScrollView style={styles.container}>
                     <Text style={styles.description}>Please enter the following details to create your User Profile</Text>
                     <Text style={styles.textTitle}>Username</Text>
                     <UsernameTextInput
@@ -111,13 +119,42 @@ export default function SetProfile({navigation}){
                         style={styles.textInput}
                         placeholder="Enter a Bio"
                     />
+                    <Text style={styles.description}>The following information will not be displayed with anyone. This data is used for in-app calculations and the study</Text>
+                    <Text style={styles.textTitle}>Current Weight (kg)</Text>
+                    <TextInput
+                        onChangeText={text => setWeight(text)}
+                        value={weightInput}
+                        style={styles.textInput}
+                        placeholder="Enter Your Current Weight"
+                    />
+                    <Text style={styles.textTitle}>Current Goals</Text>
+                    <TextInput
+                        onChangeText={text => setGoals(text)}
+                        value={goalsInput}
+                        style={styles.textInput}
+                        placeholder="Enter Your Current Goals"
+                    />
+                    <Text style={styles.textTitle}>Age</Text>
+                    <TextInput
+                        onChangeText={text => setAge(text)}
+                        value={ageInput}
+                        style={styles.textInput}
+                        placeholder="Enter Your Age"
+                    />
+                    <Text style={styles.textTitle}>Gender</Text>
+                    <TextInput
+                        onChangeText={text => setGender(text)}
+                        value={genderInput}
+                        style={styles.textInput}
+                        placeholder="Enter Your Gender"
+                    />
                     <TouchableOpacity
                             onPress={updateDatabase}
                             style={styles.buttonContainer}
                         >
                             <Text style={styles.buttonText}>Save</Text>
                         </TouchableOpacity>
-            </View>
+            </ScrollView>
                         
         </KeyboardAvoidingView>
         
@@ -161,6 +198,7 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 10,
         alignSelf: 'center',
+        marginBottom: 200
     },
     buttonText: {
         color: 'white',

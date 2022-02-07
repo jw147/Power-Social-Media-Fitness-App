@@ -18,12 +18,9 @@ import FeedScreen from './screens/FeedScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SearchScreen from './screens/SearchScreen';
 import ExerciseScreen from './screens/ExerciseScreen';
-import WeightsScreen from './screens/WeightsScreen';
-import CardioScreen from './screens/CardioScreen';
-import CalisthenicsScreen from './screens/CalisthenicsScreen';
 import SetProfileScreen from './screens/SetProfile';
 import EditProfileScreen from './screens/EditProfileScreen';
-
+import ProgressScreen from './screens/ProgressScreen';
 
 
 const homeName = 'Home';
@@ -40,9 +37,8 @@ function HomeScreens() {
     return(
         <Stack.Navigator>
             <Stack.Screen options={{ headerShown: false}} name={"Home Screen"} component={HomeScreen}/>
-            <Stack.Screen name="Exercise" component={ExerciseScreen}/>
-            <Stack.Screen name="Weights" component={WeightsScreen}/>
-            <Stack.Screen name="Cardio" component={CardioScreen}/>
+            <Stack.Screen options={{headerTintColor: "white", headerStyle: {backgroundColor: '#00a1d0'}}} name="Exercise" component={ExerciseScreen}/>
+            <Stack.Screen options={{headerTintColor: "white", headerStyle: {backgroundColor: '#00a1d0'}}} name="Progress" component={ProgressScreen}/>
         </Stack.Navigator>
     )
 }

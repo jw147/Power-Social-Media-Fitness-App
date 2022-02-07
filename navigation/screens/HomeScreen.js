@@ -43,7 +43,7 @@ export default function HomeScreen({navigation}){
 
           <Pressable
             style={styles.button}
-            onPress={() => Alert.alert('Progress Page')}>
+            onPress={() => navigation.navigate('Progress')}>
             <Image
               style={styles.buttonProperties}
               source={require('../../assets/HomeScreen/progress.png')}
