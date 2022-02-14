@@ -215,12 +215,16 @@ export default function ExerciseScreen({ navigation }) {
       weightsTitle = x + "Workout"
     }
   }
+
+  
+
   function selectToWeights(){
     workoutTitle();
     tempSet = [];
     tempSetWeight = [];
     tempSetReps = [];
     count = 0;
+    addWorkoutTitleDB()
     setAddSet([]);
     setAddExercise([]);
     value.map(ex => {
@@ -244,6 +248,18 @@ export default function ExerciseScreen({ navigation }) {
   function finishWorkout(){
     workoutCalories();
     Alert.alert("Congratulations!", "You burned approxiamtely " + calories + "kcal in this workout!")
+
+    firebase.firestore()
+      .collection('savedWorkouts')
+      .doc(currentUser.uid)
+      .collection(weightsTitle)
+      .doc(String(weightDBIndex + 1))
+      .set({
+        date: String(date).substring(0, 15),
+        exArray: tempEx,
+        calories: calories
+      })
+
     setSelectHidden(false);
     setWeightsHidden(true);
     setValue([]);
@@ -325,7 +341,7 @@ export default function ExerciseScreen({ navigation }) {
     count++;
     firebase.firestore().collection('savedWorkouts')
     .doc(currentUser.uid)
-    .collection('Back Workout')
+    .collection(weightsTitle)
     .doc(String(weightDBIndex))
     .collection(ex)
     .doc(String(previousCount))
@@ -348,7 +364,7 @@ export default function ExerciseScreen({ navigation }) {
     count++;
     firebase.firestore().collection('savedWorkouts')
     .doc(currentUser.uid)
-    .collection('Back Workout')
+    .collection(weightsTitle)
     .doc(String(weightDBIndex))
     .collection(ex)
     .doc(String(previousCount))
@@ -502,15 +518,32 @@ export default function ExerciseScreen({ navigation }) {
         Weight: exWeight
       })
 
-    firebase.firestore()
-      .collection('savedWorkouts')
-      .doc(currentUser.uid)
-      .collection(wName)
-      .doc(String(weightDBIndex + 1))
-      .set({
-        date: String(date).substring(0, 15)
-      })
+      // addExerciseDB(wName, exName);
+    
 }
+
+  var dbArray = []
+
+  function getDBArray(documentSnapshot) {
+    return documentSnapshot.get('idArray');
+  }
+
+  function addWorkoutTitleDB() {
+    firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).get()
+      .then(
+        documentSnapshot => getDBArray(documentSnapshot))
+      .then(idArray => {
+        for (var i = 0; i < idArray.length; i++) {
+          dbArray.push(idArray[i])
+        }
+        if (dbArray.includes(weightsTitle) === false) {
+          dbArray.push(weightsTitle)
+          firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).set({
+            idArray: dbArray
+          })
+        }
+      });
+  }
 
 
 //-----------------------------------------------------Calorie Functions-----------------------------------------------------
@@ -529,15 +562,19 @@ const userInfo = firebase.firestore().collection('users').doc(currentUser.uid).g
 
 function workoutCalories(){
   calories = calories + (tMin * (6 * 3.5 * userWeight) / 200)
+  calories = calories.toFixed(1)
 }
 
 function tRunningCalories(){
   let speed = distance / (runningTime / 60)
+  speed = speed.toFixed(1);
   calories = calories + (runningTime * (speed * 3.5 * userWeight) / 200)
+  calories = calories.toFixed(1)
 }
 
 function sCyclingCalories(){
   let speed = distance / (cyclingTime / 60)
+  speed = speed.toFixed(1);
   let MET = 0;
   if(speed < 9){
     MET = 3.5  
@@ -549,10 +586,12 @@ function sCyclingCalories(){
     MET = 8
   }else{MET = 10}
   calories = calories + (cyclingTime * (MET * 3.5 * userWeight) / 200)
+  calories = calories.toFixed(1)
 }
 
 function walkingCalories(){
   let speed = distance / (walkingTime / 60)
+  speed = speed.toFixed(1);
   let MET = 0;
   if (speed < 5.6){
     MET = 2.8
@@ -560,6 +599,7 @@ function walkingCalories(){
     MET = 4.3
   }
   calories = calories + (walkingTime * (MET * 3.5 * userWeight) / 200)
+  calories = calories.toFixed(1)
 }
 
 //-----------------------------------------------------Cardio-----------------------------------------------------
@@ -586,14 +626,14 @@ function walkingCalories(){
 function runningToTreadmill(){
   setTRunningHidden(false)
   setORunningHidden(true)
-  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("TreadmillRun").get().then(snap => {
+  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Treadmill Run").get().then(snap => {
    cardioDBIndex = snap.size
   });
 }
 function runningToOutdoors(){
   setTRunningHidden(true)
   setORunningHidden(false)
-  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("OutdoorsRun").get().then(snap => {
+  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Outdoors Run").get().then(snap => {
     cardioDBIndex = snap.size
    });
 }
@@ -601,14 +641,14 @@ function runningToOutdoors(){
 function cyclingToStationary(){
   setSCyclingHidden(false)
   setOCyclingHidden(true)
-  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("StationaryCycle").get().then(snap => {
+  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Stationary Cycle").get().then(snap => {
     cardioDBIndex = snap.size
    });
 }
 function cyclingToOutdoors(){
   setSCyclingHidden(true)
   setOCyclingHidden(false)
-  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("OutdoorsCycle").get().then(snap => {
+  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Outdoors Cycle").get().then(snap => {
     cardioDBIndex = snap.size
    });
 }
@@ -664,7 +704,7 @@ function finishTRunning(){
   }else{
     tRunningCalories()
     Alert.alert("Congratulations!", "You burned approxiamtely " + calories + "kcal in this workout!")
-    updateCardioData("TreadmillRun", distance, runningTime, averageBPM, calories);
+    updateCardioData("Treadmill Run", distance, runningTime, averageBPM, calories);
     setSelectHidden(false);
     setTRunningHidden(true);
     setRunningHidden(true);
@@ -679,7 +719,7 @@ function finishSCycling(){
   }else{
     sCyclingCalories()
     Alert.alert("Congratulations!", "You burned approxiamtely " + calories + "kcal in this workout!")
-    updateCardioData("StationaryCycle", distance, cyclingTime, averageBPM, calories);
+    updateCardioData("Stationary Cycle", distance, cyclingTime, averageBPM, calories);
     setSelectHidden(false);
     setSCyclingHidden(true);
     setCyclingHidden(true);
@@ -725,6 +765,8 @@ const [location, setLocation] = useState(null);
     text = JSON.stringify(location);
   }
 
+
+
   const updateCardioData = (wName, distance, time, avgBPM, cal) => {
     if(avgBPM == null){
       avgBPM = "N/A";
@@ -742,6 +784,21 @@ const [location, setLocation] = useState(null);
         Date: String(date).substring(0, 15),
         Calories: cal
       })
+
+      firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).get()
+      .then(
+        documentSnapshot => getDBArray(documentSnapshot))
+      .then(idArray => {
+        for (var i = 0; i < idArray.length; i++) {
+          dbArray.push(idArray[i])
+        }
+        if (dbArray.includes(wName) === false) {
+          dbArray.push(wName)
+          firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).set({
+            idArray: dbArray
+          })
+        }
+      });
 }
 
   
@@ -972,10 +1029,7 @@ const [location, setLocation] = useState(null);
       </HideView>
       
     </View>
-
-
-
-  )
+    )
 }
 
 const styles = StyleSheet.create({
