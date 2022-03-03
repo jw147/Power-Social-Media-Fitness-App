@@ -5,10 +5,11 @@ import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import DropDownPicker from 'react-native-dropdown-picker'
 import PropTypes from 'prop-types';
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc } from "firebase/firestore";
 import MapView from 'react-native-maps';
 import Marker from 'react-native-maps';
 import * as Location from 'expo-location';
+import { setStatusBarNetworkActivityIndicatorVisible } from 'expo-status-bar';
 
 
 
@@ -26,46 +27,18 @@ let previousCount = 1;
 var count = 0;
 var calories = 0;
 
-var tMin = 0
-var tSec = 0
-var firstTimer = false
-
 export default function ExerciseScreen({ navigation }) {
   const date = new Date()
 
   const [previousWeight, SetPreviousWeight] = useState("-");
-  
 
-  //-----------------------------------------------------Timer-----------------------------------------------------
-  function startTimer(){
-    if(firstTimer === false){
-      firstTimer = true;
-      const interval = setInterval(() => {
-  
-        if (tSec < 60) {
-          tSec++
-        }
-        if (tSec === 60) {
-          tMin++
-          tSec = 0
-        }
-      }, 1000);
-    }else{
-      tSec = -1
-      tMin = 0
-    }
-    
-  }
+  const [PR, setPR] = useState(false);
 
   //-----------------------------------------------------Hide Views-----------------------------------------------------
   const [selectHidden, setSelectHidden] = useState(false);
   const [weightsHidden, setWeightsHidden] = useState(true);
   const [runningHidden, setRunningHidden] = useState(true);
-  const [tRunningHidden, setTRunningHidden] = useState(true);
-  const [oRunningHidden, setORunningHidden] = useState(true);
   const [cyclingHidden, setCyclingHidden] = useState(true);
-  const [sCyclingHidden, setSCyclingHidden] = useState(true);
-  const [oCyclingHidden, setOCyclingHidden] = useState(true);
   const [walkingHidden, setWalkingHidden] = useState(true);
 
   const HideView = (props) => {
@@ -191,8 +164,7 @@ export default function ExerciseScreen({ navigation }) {
   const [itemsCardio, setItemsCardio] = useState([
     { label: 'Running', value: 'running'},
     { label: 'Cycling', value: 'cycling'},
-    { label: 'Walking', value: 'walking'},
-    { label: 'Enter Your Own Exercise', value: 'eyoe'}
+    { label: 'Walking', value: 'walking'}
   ]);
 
   //-----------------------------------------------------Weights-----------------------------------------------------
@@ -246,34 +218,356 @@ export default function ExerciseScreen({ navigation }) {
   }
 
   function finishWorkout(){
-    workoutCalories();
-    Alert.alert("Congratulations!", "You burned approxiamtely " + calories + "kcal in this workout!")
-
-    firebase.firestore()
-      .collection('savedWorkouts')
+    if(workoutTime === 0){
+      Alert.alert("Please enter the duration of this workout")
+    }else{
+      var cal = workoutCalories();
+      var totalWeight = 0;
+      var dbWeight = 0;
+      for(var i = 0; i<tempSetWeight.length; i++){
+        totalWeight = totalWeight + (parseInt(tempSetWeight[i]) * parseInt(tempSetReps[i]));
+      }
+      firebase.firestore()
+      .collection('rewardCounts')
       .doc(currentUser.uid)
-      .collection(weightsTitle)
-      .doc(String(weightDBIndex + 1))
-      .set({
-        date: String(date).substring(0, 15),
-        exArray: tempEx,
-        calories: calories
+      .collection('weightCounters').get()
+      .then(docs=>{
+        docs.forEach(doc=>{
+          if(doc.data().total != null){
+            dbWeight = doc.data().total
+          }
+        })
+        firebase.firestore()
+        .collection('rewardCounts')
+        .doc(currentUser.uid)
+        .collection('weightCounters')
+        .doc('totalWeight')
+        .set({
+          total: dbWeight + totalWeight,
+        })
+        var total = dbWeight + totalWeight;
+        rewards(total, cal, 0)
       })
-
-    setSelectHidden(false);
-    setWeightsHidden(true);
-    setValue([]);
-    calories = 0;
+      var dbCal = 0;
+      firebase.firestore()
+        .collection('rewardCounts')
+        .doc(currentUser.uid)
+        .collection('calorieCounters').get()
+        .then(docs => {
+          docs.forEach(doc => {
+            if (doc.data().total != null) {
+              dbCal = doc.data().total
+            }
+          })
+          firebase.firestore()
+            .collection('rewardCounts')
+            .doc(currentUser.uid)
+            .collection('calorieCounters')
+            .doc('totalCalories')
+            .set({
+              total: dbCal + parseInt(cal),
+            })
+        })
+      if(PR === true){
+        Alert.alert("Congratulations!", "You burned approximately " + calories + "kcal in this workout and hit a new one rep max!",
+      [
+        {
+          text: "OK"
+        },
+        {
+          text: "Post Workout",
+          onPress: ()=>postWeights(cal)
+        }
+      ])
+      }else{
+        Alert.alert("Congratulations!", "You burned approximately " + calories + "kcal in this workout!",
+        [
+          {
+            text: "OK"
+          },
+          {
+            text: "Post Workout",
+            onPress: ()=>postWeights(cal)
+          }
+        ])
+      }
+  
+      let index = "";
+      if(weightDBIndex < 10){
+        index = " "+ String(weightDBIndex);
+      }else{
+        index = String(weightDBIndex);
+      }
+  
+      firebase.firestore()
+        .collection('savedWorkouts')
+        .doc(currentUser.uid)
+        .collection(weightsTitle)
+        .doc(index)
+        .set({
+          date: String(date).substring(0, 15),
+          exArray: tempEx,
+          calories: cal
+        })
+  
+      setSelectHidden(false);
+      setWeightsHidden(true);
+      setValue([]);
+      calories = 0;
+    }
   }
+  function rewards(tW, tC, tD){
+    if(tW >= 1000 && tW<2000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('weights')
+      .doc(currentUser.uid)
+      .set({
+        one: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tW >= 2000 && tW<10000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('weights')
+      .doc(currentUser.uid)
+      .set({
+        one: true,
+        two: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tW >= 10000 && tW<20000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('weights')
+      .doc(currentUser.uid)
+      .set({
+        one: true,
+        two: true,
+        ten: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tW >= 20000 && tW<50000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('weights')
+      .doc(currentUser.uid)
+      .set({
+        one: true,
+        two: true,
+        ten: true,
+        twenty: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tW >= 50000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('weights')
+      .doc(currentUser.uid)
+      .set({
+        one: true,
+        two: true,
+        ten: true,
+        twenty: true,
+        fifty: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tC >= 500 && tC<1000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('calories')
+      .doc(currentUser.uid)
+      .set({
+        half: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tC >= 1000 && tC<2000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('calories')
+      .doc(currentUser.uid)
+      .set({
+        half: true,
+        one: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tC >= 2000 && tC<3500){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('calories')
+      .doc(currentUser.uid)
+      .set({
+        half: true,
+        one: true,
+        two: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tC >= 3500 && tC<5000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('calories')
+      .doc(currentUser.uid)
+      .set({
+        half: true,
+        one: true,
+        two: true,
+        threehalf: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tC >= 5000 && tC<7000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('calories')
+      .doc(currentUser.uid)
+      .set({
+        half: true,
+        one: true,
+        two: true,
+        threehalf: true,
+        five: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tC >= 7000 && tC<10000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('calories')
+      .doc(currentUser.uid)
+      .set({
+        half: true,
+        one: true,
+        two: true,
+        threehalf: true,
+        five: true,
+        seven: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tC >= 10000){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('calories')
+      .doc(currentUser.uid)
+      .set({
+        half: true,
+        one: true,
+        two: true,
+        threehalf: true,
+        five: true,
+        seven: true,
+        ten: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tD >= 2 && tD < 5){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('distance')
+      .doc(currentUser.uid)
+      .set({
+        two: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tD >= 5 && tD < 10){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('distance')
+      .doc(currentUser.uid)
+      .set({
+        two: true,
+        five: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tD >= 10 && tD < 15){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('distance')
+      .doc(currentUser.uid)
+      .set({
+        two: true,
+        five: true,
+        ten: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tD >= 15 && tD < 20){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('distance')
+      .doc(currentUser.uid)
+      .set({
+        two: true,
+        five: true,
+        ten: true,
+        fifteen: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tD >= 20 && tD < 30){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('distance')
+      .doc(currentUser.uid)
+      .set({
+        two: true,
+        five: true,
+        ten: true,
+        fifteen: true,
+        twenty: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+    if(tD >= 30){
+      firebase.firestore()
+      .collection('rewards')
+      .doc(currentUser.uid)
+      .collection('distance')
+      .doc(currentUser.uid)
+      .set({
+        two: true,
+        five: true,
+        ten: true,
+        fifteen: true,
+        twenty: true,
+        thirty: true,
+      })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
+    }
+  }
+
 
   function cancel(){
     setSelectHidden(false);
     setWeightsHidden(true);
-    setTRunningHidden(true);
-    setORunningHidden(true);
     setRunningHidden(true);
-    setSCyclingHidden(true);
-    setOCyclingHidden(true);
     setCyclingHidden(true);
     setWalkingHidden(true);
 
@@ -335,8 +629,6 @@ export default function ExerciseScreen({ navigation }) {
   
   const addExerciseHandler = (ex)=>{
     previousCount = 1;
-    workoutCalories()
-    startTimer();
     tempEx = [...addExercise]
     count++;
     firebase.firestore().collection('savedWorkouts')
@@ -506,20 +798,114 @@ export default function ExerciseScreen({ navigation }) {
     if(exReps == null){
       exReps = "0";
     }
+    if(exName === "Deadlift" || exName === "Barbell Bench Press" || exName === "Barbell Squat"){
+      if(exReps === "1"){
+        
+        weightPR(exName, exWeight);
+      }
+    }
+    let index = "";
+    if(weightDBIndex < 10){
+      index = " "+ String(weightDBIndex);
+    }else{
+      index = String(weightDBIndex);
+    }
     firebase.firestore()
       .collection('savedWorkouts')
       .doc(currentUser.uid)
       .collection(wName)
-      .doc(String(weightDBIndex + 1))
+      .doc(index)
       .collection(exName)
       .doc(exSets)
       .set({
         Reps: exReps,
         Weight: exWeight
-      })
+      })    
+}
 
-      // addExerciseDB(wName, exName);
-    
+function weightPR(exName, exWeight){
+
+  firebase.firestore()
+  .collection('personalRecords')
+  .doc(currentUser.uid)
+  .collection(exName).get()
+  .then(query=> {
+    if (query.size === 0) {
+      setPR(true);
+      firebase.firestore()
+        .collection('personalRecords')
+        .doc(currentUser.uid)
+        .collection(exName)
+        .doc("PR")
+        .set({
+          weight: exWeight,
+          date: String(date),
+          name: exName
+        })
+    } else {
+      firebase.firestore()
+        .collection('personalRecords')
+        .doc(currentUser.uid)
+        .collection(exName).get()
+        .then(docs => {
+          docs.forEach(doc=>{
+            if(doc.data().weight >= exWeight){
+                  setPR(false)
+                  console.log("no PR")
+                }else{
+                  setPR(true);
+                  firebase.firestore()
+                  .collection('personalRecords')
+                  .doc(currentUser.uid)
+                  .collection(exName)
+                  .doc("PR")
+                  .set({
+                    weight: exWeight,
+                    date: String(date),
+                    name: exName
+                  })
+                }
+            
+          })
+        })
+    }
+  
+  });
+}
+
+let posts = [];
+let postIndex = 0;
+function postWeights(cal){
+  console.log("calories: " + cal)
+  setPR(false)
+  firebase.firestore()
+    .collection('posts')
+    .doc(currentUser.uid)
+    .collection('posts').get()
+    .then(query => {
+      postIndex = query.size
+      var y = 0;
+      let index =""
+      if(postIndex < 10){
+        index = " " + String(postIndex)
+      }else{
+        index = String(postIndex)
+      }
+      
+      for(var i = 0; i < addSet.length; i++){
+        for(var x = 0; x <addSet[i].data.length; x++){
+          posts.push({workout: weightsTitle, ex: addSet[i].data[x].name, set:(x+1) , reps: tempSetReps[y], weight: tempSetWeight[y], date: date, calories: cal})
+          y++;
+        }
+      }
+      firebase.firestore()
+        .collection('posts')
+        .doc(currentUser.uid)
+        .collection('posts')
+        .doc(index).set({
+          post: posts
+        })
+    })
 }
 
   var dbArray = []
@@ -560,9 +946,11 @@ const userInfo = firebase.firestore().collection('users').doc(currentUser.uid).g
       userWeight = weight;
   });
 
+let workoutTime= 0;
 function workoutCalories(){
-  calories = calories + (tMin * (6 * 3.5 * userWeight) / 200)
-  calories = calories.toFixed(1)
+  calories = calories + (workoutTime * (6 * 3.5 * userWeight) / 200)
+  return calories = calories.toFixed(1)
+ 
 }
 
 function tRunningCalories(){
@@ -611,8 +999,14 @@ function walkingCalories(){
       setSelectHidden(true);
       if (valueCardio === "running") {
         setRunningHidden(false);
+        firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Run").get().then(snap => {
+          cardioDBIndex = snap.size
+         });
       } else if (valueCardio === "cycling") {
         setCyclingHidden(false);
+        firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Cycle").get().then(snap => {
+          cardioDBIndex = snap.size
+         });
       } else if (valueCardio === "walking") {
         setWalkingHidden(false);
         firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Walk").get().then(snap => {
@@ -622,36 +1016,6 @@ function walkingCalories(){
     }
   }
 
-
-function runningToTreadmill(){
-  setTRunningHidden(false)
-  setORunningHidden(true)
-  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Treadmill Run").get().then(snap => {
-   cardioDBIndex = snap.size
-  });
-}
-function runningToOutdoors(){
-  setTRunningHidden(true)
-  setORunningHidden(false)
-  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Outdoors Run").get().then(snap => {
-    cardioDBIndex = snap.size
-   });
-}
-
-function cyclingToStationary(){
-  setSCyclingHidden(false)
-  setOCyclingHidden(true)
-  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Stationary Cycle").get().then(snap => {
-    cardioDBIndex = snap.size
-   });
-}
-function cyclingToOutdoors(){
-  setSCyclingHidden(true)
-  setOCyclingHidden(false)
-  firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).collection("Outdoors Cycle").get().then(snap => {
-    cardioDBIndex = snap.size
-   });
-}
 
 var distance = 0;
 var runningTime = 0;
@@ -703,10 +1067,75 @@ function finishTRunning(){
     alert("Please fill in the required details")
   }else{
     tRunningCalories()
-    Alert.alert("Congratulations!", "You burned approxiamtely " + calories + "kcal in this workout!")
-    updateCardioData("Treadmill Run", distance, runningTime, averageBPM, calories);
+    var dbKM = 0;
+    var cal = calories;
+    firebase.firestore()
+      .collection('rewardCounts')
+      .doc(currentUser.uid)
+      .collection('cardioCounters').get()
+      .then(docs=>{
+        docs.forEach(doc=>{
+          if(doc.data().total != null){
+            dbKM = doc.data().total
+          }
+        })
+        firebase.firestore()
+        .collection('rewardCounts')
+        .doc(currentUser.uid)
+        .collection('cardioCounters')
+        .doc('totalDistance')
+        .set({
+          total: dbKM + parseInt(distance),
+        })
+        var total = dbKM + parseInt(distance)
+        rewards(0, cal, total)
+      })
+    var dbCal = 0;
+    firebase.firestore()
+      .collection('rewardCounts')
+      .doc(currentUser.uid)
+      .collection('calorieCounters').get()
+      .then(docs => {
+        docs.forEach(doc => {
+          if (doc.data().total != null) {
+            dbCal = doc.data().total
+          }
+        })
+        firebase.firestore()
+          .collection('rewardCounts')
+          .doc(currentUser.uid)
+          .collection('calorieCounters')
+          .doc('totalCalories')
+          .set({
+            total: dbCal + parseInt(cal),
+          })
+      })
+    updateCardioData("Run", distance, runningTime, averageBPM, calories);
+    if(PR === true){
+      Alert.alert("Congratulations!", "You burned approximately " + calories + "kcal in this workout and made a new personal best! Check your profile to view your PBs!",
+    [
+      {
+        text: "OK"
+      },
+      {
+        text: "Post Workout",
+        onPress: ()=>postCardio("Run", distance, runningTime, cal)
+      }
+    ])
+    }else{
+      Alert.alert("Congratulations!", "You burned approximately " + calories + "kcal in this workout!",
+      [
+        {
+          text: "OK"
+        },
+        {
+          text: "Post Workout",
+          onPress: ()=>postCardio("Run", distance, runningTime, cal)
+        }
+      ])
+    }
+    
     setSelectHidden(false);
-    setTRunningHidden(true);
     setRunningHidden(true);
     setValueCardio([]);
     calories = 0;
@@ -718,10 +1147,74 @@ function finishSCycling(){
     alert("Please fill in the required details")
   }else{
     sCyclingCalories()
-    Alert.alert("Congratulations!", "You burned approxiamtely " + calories + "kcal in this workout!")
-    updateCardioData("Stationary Cycle", distance, cyclingTime, averageBPM, calories);
+    var dbKM = 0;
+    var cal = calories;
+    firebase.firestore()
+      .collection('rewardCounts')
+      .doc(currentUser.uid)
+      .collection('cardioCounters').get()
+      .then(docs=>{
+        docs.forEach(doc=>{
+          if(doc.data().total != null){
+            dbKM = doc.data().total
+          }
+        })
+        firebase.firestore()
+        .collection('rewardCounts')
+        .doc(currentUser.uid)
+        .collection('cardioCounters')
+        .doc('totalDistance')
+        .set({
+          total: dbKM + parseInt(distance),
+        })
+        var total = dbKM + parseInt(distance)
+        rewards(0, cal, total)
+      })
+      var dbCal = 0;
+      firebase.firestore()
+        .collection('rewardCounts')
+        .doc(currentUser.uid)
+        .collection('calorieCounters').get()
+        .then(docs=>{
+          docs.forEach(doc=>{
+            if(doc.data().total != null){
+              dbCal = doc.data().total
+            }
+          })
+          firebase.firestore()
+          .collection('rewardCounts')
+          .doc(currentUser.uid)
+          .collection('calorieCounters')
+          .doc('totalCalories')
+          .set({
+            total: dbCal + parseInt(cal),
+          })
+        })
+    updateCardioData("Cycle", distance, cyclingTime, averageBPM, calories);
+    if (PR === true) {
+      Alert.alert("Congratulations!", "You burned approximately " + calories + "kcal in this workout and made a new personal best! Check your profile to view your PBs!",
+        [
+          {
+            text: "OK"
+          },
+          {
+            text: "Post Workout",
+            onPress: () => postCardio("Cycle", distance, cyclingTime, cal)
+          }
+        ])
+    } else {
+      Alert.alert("Congratulations!", "You burned approximately " + calories + "kcal in this workout!",
+        [
+          {
+            text: "OK"
+          },
+          {
+            text: "Post Workout",
+            onPress: () => postCardio("Cycle", distance, cyclingTime, cal)
+          }
+        ])
+    }
     setSelectHidden(false);
-    setSCyclingHidden(true);
     setCyclingHidden(true);
     setValueCardio([]);
     calories = 0;
@@ -733,8 +1226,73 @@ function finishWalking(){
     alert("Please fill in the required details")
   }else{
     walkingCalories()
-    Alert.alert("Congratulations!", "You burned approxiamtely " + calories + "kcal in this workout!")
+    var dbKM = 0;
+    var cal = calories;
+    firebase.firestore()
+      .collection('rewardCounts')
+      .doc(currentUser.uid)
+      .collection('cardioCounters').get()
+      .then(docs=>{
+        docs.forEach(doc=>{
+          if(doc.data().total != null){
+            dbKM = doc.data().total
+          }
+        })
+        firebase.firestore()
+        .collection('rewardCounts')
+        .doc(currentUser.uid)
+        .collection('cardioCounters')
+        .doc('totalDistance')
+        .set({
+          total: dbKM + parseInt(distance),
+        })
+        var total = dbKM + parseInt(distance)
+        rewards(0, cal, total)
+      })
+    var dbCal = 0;
+    firebase.firestore()
+      .collection('rewardCounts')
+      .doc(currentUser.uid)
+      .collection('calorieCounters').get()
+      .then(docs=>{
+        docs.forEach(doc=>{
+          if(doc.data().total != null){
+            dbCal = doc.data().total
+          }
+        })
+        firebase.firestore()
+        .collection('rewardCounts')
+        .doc(currentUser.uid)
+        .collection('calorieCounters')
+        .doc('totalCalories')
+        .set({
+          total: dbCal + parseInt(cal),
+        })
+      })
     updateCardioData("Walk", distance, walkingTime, averageBPM, calories);
+    if (PR === true) {
+      Alert.alert("Congratulations!", "You burned approximately " + calories + "kcal in this workout and made a new personal best! Check your profile to view your PBs!",
+        [
+          {
+            text: "OK"
+          },
+          {
+            text: "Post Workout",
+            onPress: () => postCardio("Walk", distance, walkingTime, cal)
+          }
+        ])
+    } else {
+      Alert.alert("Congratulations!", "You burned approximately " + calories + "kcal in this workout!",
+        [
+          {
+            text: "OK"
+          },
+          {
+            text: "Post Workout",
+            onPress: () => postCardio("Walk", distance, walkingTime, cal)
+          }
+        ])
+    }
     setSelectHidden(false);
     setWalkingHidden(true);
     setValueCardio([]);
@@ -742,36 +1300,13 @@ function finishWalking(){
   }
 }
 
-const [location, setLocation] = useState(null);
-  const [errorMsg, setErrorMsg] = useState(null);
-
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        return;
-      }
-
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
-    })();
-  }, []);
-
-  let text = 'Waiting..';
-  if (errorMsg) {
-    text = errorMsg;
-  } else if (location) {
-    text = JSON.stringify(location);
-  }
-
-
-
   const updateCardioData = (wName, distance, time, avgBPM, cal) => {
     if(avgBPM == null){
       avgBPM = "N/A";
     }
     let speed = distance / (time / 60)
+    speed = speed.toFixed(1);
+    cardioPR(wName, distance, time, cal, speed);
     firebase.firestore()
       .collection('savedWorkouts')
       .doc(currentUser.uid)
@@ -800,6 +1335,130 @@ const [location, setLocation] = useState(null);
         }
       });
 }
+let testPR = false;
+function cardioPR(wName, distance, time, cal, speed){
+
+  firebase.firestore()
+  .collection('personalRecords')
+  .doc(currentUser.uid)
+  .collection(wName).get()
+  .then(query=> {
+    if (query.size === 0) {
+      setPR(true);
+      testPR = true;
+      firebase.firestore()
+        .collection('personalRecords')
+        .doc(currentUser.uid)
+        .collection(wName)
+        .doc("DISTANCE")
+        .set({
+          distance: distance,
+          time: time,
+          speed: speed,
+          date: String(date),
+          name: wName
+        })
+        firebase.firestore()
+        .collection('personalRecords')
+        .doc(currentUser.uid)
+        .collection(wName)
+        .doc("SPEED")
+        .set({
+          distance: distance,
+          time: time,
+          speed: speed,
+          date: String(date),
+          name: wName
+        })
+    } else {
+      firebase.firestore()
+        .collection('personalRecords')
+        .doc(currentUser.uid)
+        .collection(wName).get()
+        .then(docs => {
+          docs.forEach(doc=>{
+            if(doc.data().speed >= speed && doc.data().distance >= distance){
+                  setPR(false)
+                  console.log("no PR")
+                }
+                if(doc.data().speed < speed){
+                  setPR(true);
+                  testPR = true;
+                  firebase.firestore()
+                  .collection('personalRecords')
+                  .doc(currentUser.uid)
+                  .collection(wName)
+                  .doc("SPEED")
+                  .set({
+                    distance: distance,
+                    time: time,
+                    speed: speed,
+                    date: String(date),
+                    name: wName
+                  })
+                  console.log("speed PR")
+                }
+                if(doc.data().distance < distance){
+                  setPR(true);
+                  testPR = true;
+                  firebase.firestore()
+                  .collection('personalRecords')
+                  .doc(currentUser.uid)
+                  .collection(wName)
+                  .doc("DISTANCE")
+                  .set({
+                    distance: distance,
+                    time: time,
+                    speed: speed,
+                    date: String(date),
+                    name: wName
+                  })
+                  console.log("distance PR")
+                }
+            
+          })
+        })
+    }
+  
+  });
+}
+
+let cPostIndex = 0;
+function postCardio(cName, dis, time, cal){
+  setPR(false)
+  let speed = distance / (time / 60)
+  speed = speed.toFixed(1);
+  firebase.firestore()
+    .collection('posts')
+    .doc(currentUser.uid)
+    .collection('posts').get()
+    .then(query => {
+      cPostIndex = query.size
+      var y = 0;
+      let index = ""
+      if (cPostIndex < 10) {
+        index = " " + String(cPostIndex)
+      } else {
+        index = String(cPostIndex)
+      }
+
+      firebase.firestore()
+        .collection('posts')
+        .doc(currentUser.uid)
+        .collection('posts')
+        .doc(index).set({
+          cardio: cName,
+          distance: dis,
+          time: time,
+          date: date,
+          calories: cal,
+          speed: speed,
+          name: cName
+        })
+    })
+    
+  }
+
 
   
 
@@ -909,20 +1568,20 @@ const [location, setLocation] = useState(null);
           >
             <View style={styles.exerciseContainerView}>
               <ScrollView style={styles.exerciseView}>
-              {value.indexOf("Back ") > -1 && titleBack}
-              {value.indexOf("Back ") > -1 && exBack}
-              {value.indexOf("Biceps ") > -1 && titleBiceps}
-              {value.indexOf("Biceps ") > -1 && exBiceps}
-              {value.indexOf("Triceps ") > -1 && titleTriceps}
-              {value.indexOf("Triceps ") > -1 && exTriceps}
-              {value.indexOf("Shoulders ") > -1 && titleShoulders}
-              {value.indexOf("Shoulders ") > -1 && exShoulders}
-              {value.indexOf("Chest ") > -1 && titleChest}
-              {value.indexOf("Chest ") > -1 && exChest}
-              {value.indexOf("Legs ") > -1 && titleLegs}
-              {value.indexOf("Legs ") > -1 && exLegs}
-              {value.indexOf("Abs ") > -1 && titleAbs}
-              {value.indexOf("Abs ") > -1 && exAbs}
+                {value.indexOf("Back ") > -1 && titleBack}
+                {value.indexOf("Back ") > -1 && exBack}
+                {value.indexOf("Biceps ") > -1 && titleBiceps}
+                {value.indexOf("Biceps ") > -1 && exBiceps}
+                {value.indexOf("Triceps ") > -1 && titleTriceps}
+                {value.indexOf("Triceps ") > -1 && exTriceps}
+                {value.indexOf("Shoulders ") > -1 && titleShoulders}
+                {value.indexOf("Shoulders ") > -1 && exShoulders}
+                {value.indexOf("Chest ") > -1 && titleChest}
+                {value.indexOf("Chest ") > -1 && exChest}
+                {value.indexOf("Legs ") > -1 && titleLegs}
+                {value.indexOf("Legs ") > -1 && exLegs}
+                {value.indexOf("Abs ") > -1 && titleAbs}
+                {value.indexOf("Abs ") > -1 && exAbs}
                 <Pressable
                   style={[styles.button, styles.buttonCloseModal]}
                   onPress={() => setModalVisible(!modalVisible)}
@@ -936,6 +1595,7 @@ const [location, setLocation] = useState(null);
             onPress={()=> setModalVisible(true)}>
             <Text style={{ color: 'white' }}>Add Exercise</Text>
           </Pressable>
+          <TextInput style={styles.workoutTime} placeholder="Workout Duration (Minutes)" value={workoutTime} onChangeText={text=>workoutTime=text} returnKeyType={'done'} keyboardType='number-pad'></TextInput>
           <View style={{flexDirection: 'row', justifyContent: 'center'}}>
             <Pressable style={styles.cancelWorkout}
               onPress={() => cancelWorkout()}>
@@ -952,79 +1612,56 @@ const [location, setLocation] = useState(null);
       <HideView hide={runningHidden}>
         <View style={styles.container}>
           <Text style={styles.title}>Running</Text>
-          <View style={{ flexDirection: 'row' }}>
-          <Pressable style={styles.runningHeader}onPress={() => runningToTreadmill()}><Text style={styles.runningHeaderText}>Treadmill</Text></Pressable>
-            <Pressable style={styles.runningHeader}onPress={() => runningToOutdoors()}><Text style={styles.runningHeaderText}>Outdoors</Text></Pressable>
-          </View>
-          <HideView hide={tRunningHidden}>
-            <View>
+          
+          <View>
             <Text style={styles.distanceHeader}>Distance Ran (km):</Text>
             <TextInput style={styles.distanceInput} editable={true} keyboardType='number-pad' returnKeyType={'done'} value={distance} onChangeText={text => distance = text}></TextInput>
             <Text style={styles.distanceHeader}>Time Taken (minutes):</Text>
             <TextInput style={styles.distanceInput} editable={true} keyboardType='number-pad' returnKeyType={'done'} value={runningTime} onChangeText={text => runningTime = text}></TextInput>
             <Text style={styles.distanceHeader}>Average BPM (optional):</Text>
             <TextInput style={styles.distanceInput} editable={true} keyboardType='number-pad' returnKeyType={'done'} value={averageBPM} onChangeText={text => averageBPM = text}></TextInput>
-            <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+            <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
 
-            <Pressable style={styles.cancelWorkout} onPress={() => cancelTRunning()}><Text style={{ color: 'white' }}>Cancel</Text></Pressable>
-            <Pressable style={styles.finishWorkout} onPress={() => finishTRunning()}><Text style={{ color: 'white' }}>Finish</Text></Pressable>
+              <Pressable style={styles.cancelWorkout} onPress={() => cancelTRunning()}><Text style={{ color: 'white' }}>Cancel</Text></Pressable>
+              <Pressable style={styles.finishWorkout} onPress={() => finishTRunning()}><Text style={{ color: 'white' }}>Finish</Text></Pressable>
             </View>
-            </View>
-          </HideView>
-          <HideView hide={oRunningHidden}>
-            {location != null && <MapView style={{ width: '90%', height: 300, alignSelf: 'center', marginTop: 20 }}
-              showsUserLocation={true}
-              showsCompass={true}
-              initialRegion={{
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.000922,
-                longitudeDelta: 0.000421,
-              }}
-            ></MapView>}
-          </HideView>
+          </View>
         </View>
       </HideView>
       <HideView hide={cyclingHidden}>
         <View style={styles.container}>
           <Text style={styles.title}>Cycling</Text>
-          <View style={{ flexDirection: 'row' }}>
-          <Pressable style={styles.runningHeader}onPress={() => cyclingToStationary()}><Text style={styles.runningHeaderText}>Stationary</Text></Pressable>
-            <Pressable style={styles.runningHeader}onPress={() => cyclingToOutdoors()}><Text style={styles.runningHeaderText}>Outdoors</Text></Pressable>
-          </View>
-          <HideView hide={sCyclingHidden}>
-            <View>
+          <View>
             <Text style={styles.distanceHeader}>Distance Cycled (km):</Text>
             <TextInput style={styles.distanceInput} editable={true} keyboardType='number-pad' returnKeyType={'done'} value={distance} onChangeText={text => distance = text}></TextInput>
             <Text style={styles.distanceHeader}>Time Taken (minutes):</Text>
             <TextInput style={styles.distanceInput} editable={true} keyboardType='number-pad' returnKeyType={'done'} value={cyclingTime} onChangeText={text => cyclingTime = text}></TextInput>
             <Text style={styles.distanceHeader}>Average BPM (optional):</Text>
             <TextInput style={styles.distanceInput} editable={true} keyboardType='number-pad' returnKeyType={'done'} value={averageBPM} onChangeText={text => averageBPM = text}></TextInput>
-            <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+            <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
 
-            <Pressable style={styles.cancelWorkout} onPress={() => cancelSCycling()}><Text style={{ color: 'white' }}>Cancel</Text></Pressable>
-            <Pressable style={styles.finishWorkout} onPress={() => finishSCycling()}><Text style={{ color: 'white' }}>Finish</Text></Pressable>
+              <Pressable style={styles.cancelWorkout} onPress={() => cancelSCycling()}><Text style={{ color: 'white' }}>Cancel</Text></Pressable>
+              <Pressable style={styles.finishWorkout} onPress={() => finishSCycling()}><Text style={{ color: 'white' }}>Finish</Text></Pressable>
             </View>
-            </View>
-          </HideView>
+          </View>
         </View>
       </HideView>
       <HideView hide={walkingHidden}>
         <View style={styles.container}>
           <Text style={styles.title}>Walking</Text>
-            <View>
+          <View>
             <Text style={styles.distanceHeader}>Distance Walked (km):</Text>
             <TextInput style={styles.distanceInput} editable={true} keyboardType='number-pad' returnKeyType={'done'} value={distance} onChangeText={text => distance = text}></TextInput>
             <Text style={styles.distanceHeader}>Time Taken (minutes):</Text>
             <TextInput style={styles.distanceInput} editable={true} keyboardType='number-pad' returnKeyType={'done'} value={walkingTime} onChangeText={text => walkingTime = text}></TextInput>
             <Text style={styles.distanceHeader}>Average BPM (optional):</Text>
             <TextInput style={styles.distanceInput} editable={true} keyboardType='number-pad' returnKeyType={'done'} value={averageBPM} onChangeText={text => averageBPM = text}></TextInput>
-            <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+            <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
 
-            <Pressable style={styles.cancelWorkout} onPress={() => cancelWalking()}><Text style={{ color: 'white' }}>Cancel</Text></Pressable>
-            <Pressable style={styles.finishWorkout} onPress={() => finishWalking()}><Text style={{ color: 'white' }}>Finish</Text></Pressable>
+              <Pressable style={styles.cancelWorkout} onPress={() => cancelWalking()}><Text style={{ color: 'white' }}>Cancel</Text></Pressable>
+              <Pressable style={styles.finishWorkout} onPress={() => finishWalking()}><Text style={{ color: 'white' }}>Finish</Text></Pressable>
             </View>
-            </View>
+          </View>
         </View>
       </HideView>
       
@@ -1298,7 +1935,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'black',
     marginTop: 10,
-    marginLeft: 5
+    marginLeft: 5,
+    borderRadius: 5
+  },
+  workoutTime: {
+    height: 50,
+    width: '80%',
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 15,
+    alignSelf: 'center',
+    marginTop: 10,
+    textAlign: 'center'
   }
 });
 

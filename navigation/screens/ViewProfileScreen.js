@@ -7,14 +7,16 @@ import 'firebase/compat/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-export default function ProfileScreen({navigation}){
-
+export default function ProfileScreen({route, navigation}){
+    
     const currentUser = firebase.auth().currentUser;
     const db = firebase.firestore();
 
     const [userName, setUserName] = useState('')
     const [displayName, setDisplayName] = useState('')
     const [Bio, setBio] = useState('')
+
+    const {userID} = route.params;
 
     function getUserName(documentSnapshot) {
         return documentSnapshot.get('username');
@@ -28,7 +30,7 @@ export default function ProfileScreen({navigation}){
         return documentSnapshot.get('bio');
     }
 
-    const gettingUserName = db.collection('users').doc(currentUser.uid).get()
+    const gettingUserName = db.collection('users').doc(userID).get()
         .then(
             documentSnapshot => getUserName(documentSnapshot))
         .then(username => {
@@ -39,7 +41,7 @@ export default function ProfileScreen({navigation}){
             }
         });
 
-    const gettingDisplayName = db.collection('users').doc(currentUser.uid).get()
+    const gettingDisplayName = db.collection('users').doc(userID).get()
         .then(
             documentSnapshot => getDisplayName(documentSnapshot))
         .then(displayname => {
@@ -50,7 +52,7 @@ export default function ProfileScreen({navigation}){
             }
         });
 
-    const gettingBio = db.collection('users').doc(currentUser.uid).get()
+    const gettingBio = db.collection('users').doc(userID).get()
         .then(
             documentSnapshot => getBio(documentSnapshot))
         .then(bio => {
@@ -64,117 +66,97 @@ export default function ProfileScreen({navigation}){
     const [image, setImage] = useState('');
 
 
-    let imageRef = getDownloadURL(ref(getStorage(), "images/" + currentUser.uid));
+    let imageRef = getDownloadURL(ref(getStorage(), "images/" + userID));
     
     imageRef
     .then((url) => {
             setImage(url);
     })
-    .catch((e) => console.log('getting downloadURL of image error => ', e));
-
-    const pickImage = async () => {
-        // No permissions request is necessary for launching the image library
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.All,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0,
-        });
-            handleImagePicked(result);
-        
-    };
-
-    async function handleImagePicked(pickerResult){
-        try {
-          //setState({ uploading: true });
+    .catch((e) => console.log('getting downloadURL of image error => ', e));     
     
-          if (!pickerResult.cancelled) {
-            uploadImageAsync(pickerResult.uri);
-            //setState({ image: uploadUrl });
-          }
-        } catch (e) {
-          console.log(e);
-          alert("Upload failed, sorry :(");
-        } finally {
-          console.log("exitHandleImage");
-        }
-      };
-    
-    async function uploadImageAsync(uri) {
-        // Why are we using XMLHttpRequest? See:
-        // https://github.com/expo/expo/issues/2402#issuecomment-443726662
-        const blob = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-                resolve(xhr.response);
-            };
-            xhr.onerror = function (e) {
-                console.log(e);
-                reject(new TypeError("Network request failed"));
-            };
-            xhr.responseType = "blob";
-            xhr.open("GET", uri, true);
-            xhr.send(null);
-        });
-        const fileRef = ref(getStorage(), "images/" + currentUser.uid);
-        const result = await uploadBytes(fileRef, blob);
-
-        // We're done with the blob, close and release it
-        blob.close();
-        let imageRef = getDownloadURL(ref(getStorage(), "images/" + currentUser.uid));
-
-        imageRef
-            .then((url) => {
-                setImage(url);
-            })
-            .catch((e) => console.log('getting downloadURL of image error => ', e));
-        return await getDownloadURL(fileRef);
-    }    
-
     const [onLoad, setOnLoad] = useState(false);
+    const [pending, setPending] = useState(false);
+    const [requested, setRequested] = useState(false);
+    const [friends, setFriends] = useState(false);
     const [friendArray, setFriendArray] = useState([]);
-    const [pendingArray, setPendingArray] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [users, setUsers] = useState([]);
-    const [pendUsers, setPendUsers] = useState([]);
-    const [url, setURL] = useState("");
-    let tempUserArray = [];
-    let tempPendArray = [];
     const [tCardio, setTCardio] = useState([]);
     const [tWeights, setTWeights] = useState([]);
     const [posts, setPosts] = useState([]);
 
     useEffect(() => {
-        firebase.firestore()
-            .collection('users').get()
-            .then((docs) => {
-                    docs.forEach(doc => {
-                        if (doc.id == currentUser.uid) {
-                            if(doc.data().inbox != null){
-                                setPendingArray(doc.data().inbox)
-                            }
-                            if(doc.data().friends != null){
-                                setFriendArray(doc.data().friends)
-                                
-                            }
-                        }
-                        if(friendArray.includes(doc.id)){
-                            let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
-                            imageRef
-                            .then((url) => {
-                                tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
-                                setURL(url)
-                            })
-                            .catch((e) => console.log('getting downloadURL of image error => ', e));
-                        }
-                        setUsers(tempUserArray)
-                    })
+        // firebase.firestore()
+        //     .collection('users').get()
+        //     .then((docs) => {
+        //             docs.forEach(doc => {
+        //                 if (doc.id == userID) {
+        //                     if(doc.data().inbox != null){
+        //                             if(doc.data().inbox.includes(currentUser.uid+userID)){
+        //                                 setPending(true)
+        //                                 setPendingArray(doc.data().inbox)
+        //                             }else{setPending(false)}
+        //                     }
+        //                     if(doc.data().friends != null){
+        //                         if(doc.data().friends.includes(currentUser.uid+userID)){
+        //                             setFriends(true)
+        //                             setFriendArray(doc.data().friends)
+        //                         }else{setFriends(false)}
+        //                     }
+        //                 }
+        //                 if(friendArray.includes(doc.id)){
+        //                     let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
+        //                     imageRef
+        //                     .then((url) => {
+        //                         tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
+        //                         setURL(url)
+        //                     })
+        //                     .catch((e) => console.log('getting downloadURL of image error => ', e));
+        //                 }
+        //                 setUsers(tempUserArray)
+        //                 })
+                    
+        //     });
+        let tempWeightsArray = [];
+      let tempCardioArray = [];
+      var tempPosts = [];
+      firebase.firestore()
+        .collection('posts')
+        .doc(userID)
+        .collection('posts').get()
+        .then((docs) => {
+          docs.forEach(doc => {
+            if (doc.data().post == null) {
+
+              tempCardioArray.push({
+                calories: doc.data().calories, wName: doc.data().cardio, date: doc.data().date.seconds, distance: doc.data().distance,
+                speed: doc.data().speed, time: doc.data().time, id: currentUser.uid
+              })
+            }
+            else {
+              tempWeightsArray.push({ weights: doc.data().post, id: currentUser.uid, date: doc.data().post[0].date.seconds })
+            }
+          })
+          setTWeights(tempWeightsArray)
+          setTCardio(tempCardioArray)
+          for (var i = 0; i < tempCardioArray.length; i++) {
+            if (tempPosts.includes(tempCardioArray[i]) === false) {
+
+              tempPosts.push(tempCardioArray[i])
+            }
+          }
+          for (var i = 0; i < tempWeightsArray.length; i++) {
+            if (tempPosts.includes(tempWeightsArray[i]) === false) {
+              tempPosts.push(tempWeightsArray[i])
+            }
+          }
+          tempPosts.sort((a, b) => b.date - a.date)
+          setPosts(tempPosts);
+        })
 
         let tempRewardCount = 0;
         let tempRewards = [];
         firebase.firestore()
         .collection('rewards')
-        .doc(currentUser.uid)
+        .doc(userID)
         .collection('distance').get()
         .then(docs=>{
           docs.forEach(doc=>{
@@ -205,7 +187,7 @@ export default function ProfileScreen({navigation}){
           })
           firebase.firestore()
             .collection('rewards')
-            .doc(currentUser.uid)
+            .doc(userID)
             .collection('weights').get()
             .then(docs => {
               docs.forEach(doc => {
@@ -232,7 +214,7 @@ export default function ProfileScreen({navigation}){
               })
               firebase.firestore()
                 .collection('rewards')
-                .doc(currentUser.uid)
+                .doc(userID)
                 .collection('calories').get()
                 .then(docs => {
                   docs.forEach(doc => {
@@ -271,49 +253,262 @@ export default function ProfileScreen({navigation}){
                 })
             })
           })
-                    
-            });
-
-      let tempWeightsArray = [];
-      let tempCardioArray = [];
-      var tempPosts = [];
-      firebase.firestore()
-        .collection('posts')
-        .doc(currentUser.uid)
-        .collection('posts').get()
-        .then((docs) => {
-          docs.forEach(doc => {
-            if (doc.data().post == null) {
-
-              tempCardioArray.push({
-                calories: doc.data().calories, wName: doc.data().cardio, date: doc.data().date.seconds, distance: doc.data().distance,
-                speed: doc.data().speed, time: doc.data().time, id: currentUser.uid
-              })
-            }
-            else {
-              tempWeightsArray.push({ weights: doc.data().post, id: currentUser.uid, date: doc.data().post[0].date.seconds })
-            }
-          })
-          setTWeights(tempWeightsArray)
-          setTCardio(tempCardioArray)
-          for (var i = 0; i < tempCardioArray.length; i++) {
-            if (tempPosts.includes(tempCardioArray[i]) === false) {
-
-              tempPosts.push(tempCardioArray[i])
-            }
-          }
-          for (var i = 0; i < tempWeightsArray.length; i++) {
-            if (tempPosts.includes(tempWeightsArray[i]) === false) {
-              tempPosts.push(tempWeightsArray[i])
-            }
-          }
-          tempPosts.sort((a, b) => b.date - a.date)
-          setPosts(tempPosts);
-        })
-
       }, []);
 
-    function loadFriends(){
+
+    
+
+      function addFriend() {
+        alert(displayName + " has been sent a friend request!");
+        firebase.firestore()
+            .collection('users').get()
+            .then((docs) => {
+                    docs.forEach(doc => {
+                        if (doc.id == userID) {
+                            let _age = doc.data().age;
+                            let _bio = doc.data().bio;
+                            let _displayname = doc.data().displayname;
+                            let _email = doc.data().email;
+                            let _gender = doc.data().gender;
+                            let _goals = doc.data().goals;
+                            let _username = doc.data().username;
+                            let _weight = doc.data().weight;
+                            let _inbox = doc.data().inbox;
+                            let _friends = doc.data().friends;
+                            if (_inbox == null) {
+                                _inbox = [currentUser.uid+userID]
+                                setPending(true);
+                            } else {
+                                if (_inbox.includes(currentUser.uid+userID) == false){
+
+                                    _inbox.push(currentUser.uid+userID);
+                                }
+                                setPending(true);
+                            }
+
+                            firebase.firestore().collection('users').doc(userID).set({
+                                inbox: _inbox,
+                                age: _age,
+                                bio: _bio,
+                                displayname: _displayname,
+                                email: _email,
+                                gender: _gender,
+                                goals: _goals,
+                                username: _username,
+                                weight: _weight,
+                                friends: _friends
+                            })
+                        }
+
+                        })
+            });
+      }
+      
+
+      function confirmFriend() {
+        alert(displayName + " has been added as a friend!");
+        firebase.firestore()
+            .collection('users').get()
+            .then((docs) => {
+                    docs.forEach(doc => {
+                        if (doc.id == currentUser.uid) {
+                            let _age = doc.data().age;
+                            let _bio = doc.data().bio;
+                            let _displayname = doc.data().displayname;
+                            let _email = doc.data().email;
+                            let _gender = doc.data().gender;
+                            let _goals = doc.data().goals;
+                            let _username = doc.data().username;
+                            let _weight = doc.data().weight;
+                            let _inbox = doc.data().inbox;
+                            let _friends = doc.data().friends;
+                            if (_friends == null) {
+                                _friends = [userID]
+                                setFriends(true);
+                                setRequested(false);
+                                let index = _inbox.indexOf(userID + currentUser.uid);
+                                    if( index > -1){
+                                        _inbox.splice(index, 1);
+                                }
+                                firebase.firestore().collection('users').doc(currentUser.uid).set({
+                                    inbox: _inbox,
+                                    age: _age,
+                                    bio: _bio,
+                                    displayname: _displayname,
+                                    email: _email,
+                                    gender: _gender,
+                                    goals: _goals,
+                                    username: _username,
+                                    weight: _weight,
+                                    friends: _friends
+                                })
+
+                            } else {
+                                if (_friends.includes(userID) == false){
+                                    _friends.push(userID)
+                                    let index = _inbox.indexOf(userID + currentUser.uid);
+                                        if( index > -1){
+                                            _inbox.splice(index, 1);
+                                    }
+                                }
+                                setFriends(true);
+                                setRequested(false);
+                                firebase.firestore().collection('users').doc(currentUser.uid).set({
+                                    inbox: _inbox,
+                                    age: _age,
+                                    bio: _bio,
+                                    displayname: _displayname,
+                                    email: _email,
+                                    gender: _gender,
+                                    goals: _goals,
+                                    username: _username,
+                                    weight: _weight,
+                                    friends: _friends
+                                })
+                            }
+                            
+                        }
+                        if(doc.id === userID){
+                            let _age = doc.data().age;
+                            let _bio = doc.data().bio;
+                            let _displayname = doc.data().displayname;
+                            let _email = doc.data().email;
+                            let _gender = doc.data().gender;
+                            let _goals = doc.data().goals;
+                            let _username = doc.data().username;
+                            let _weight = doc.data().weight;
+                            let _inbox = doc.data().inbox;
+                            let _friends = doc.data().friends;
+                            if (_friends == null) {
+                                _friends = [currentUser.uid]
+                                firebase.firestore().collection('users').doc(userID).set({
+                                    inbox: _inbox,
+                                    age: _age,
+                                    bio: _bio,
+                                    displayname: _displayname,
+                                    email: _email,
+                                    gender: _gender,
+                                    goals: _goals,
+                                    username: _username,
+                                    weight: _weight,
+                                    friends: _friends
+                                })
+
+                            } else {
+                                if (_friends.includes(currentUser.uid) == false){
+                                    _friends.push(currentUser.uid)
+                                    setFriendArray(_friends)
+                                }
+                                firebase.firestore().collection('users').doc(userID).set({
+                                    inbox: _inbox,
+                                    age: _age,
+                                    bio: _bio,
+                                    displayname: _displayname,
+                                    email: _email,
+                                    gender: _gender,
+                                    goals: _goals,
+                                    username: _username,
+                                    weight: _weight,
+                                    friends: _friends
+                                })
+                            }
+                        }
+
+                        })
+            });
+      }
+
+      function deletePending(){
+        alert(displayName + "'s request has been cancelled!");
+        firebase.firestore()
+            .collection('users').get()
+            .then((docs) => {
+                    docs.forEach(doc => {
+                        if (doc.id == userID) {
+                            let _age = doc.data().age;
+                            let _bio = doc.data().bio;
+                            let _displayname = doc.data().displayname;
+                            let _email = doc.data().email;
+                            let _gender = doc.data().gender;
+                            let _goals = doc.data().goals;
+                            let _username = doc.data().username;
+                            let _weight = doc.data().weight;
+                            let _inbox = doc.data().inbox;
+                            if (_inbox == null) {
+                            } else {
+                                if (_inbox.includes(currentUser.uid+userID) == true){
+                                    let index = _inbox.indexOf(currentUser.uid+userID);
+                                    if( index > -1){
+                                        _inbox.splice(index, 1);
+                                    }
+                                }
+                                setPending(false);
+                            }
+                            firebase.firestore().collection('users').doc(userID).set({
+                                inbox: _inbox,
+                                age: _age,
+                                bio: _bio,
+                                displayname: _displayname,
+                                email: _email,
+                                gender: _gender,
+                                goals: _goals,
+                                username: _username,
+                                weight: _weight,
+                            })
+                        }
+                        
+                        })
+            });
+      }
+
+    const [pendingArray, setPendingArray] = useState([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [users, setUsers] = useState([]);
+    const [url, setURL] = useState("");
+    let tempUserArray = [];
+
+    useEffect(() => {
+        firebase.firestore()
+            .collection('users').get()
+            .then((docs) => {
+                    docs.forEach(doc => {
+                        if (doc.id == userID) {
+                            if(doc.data().inbox != null){
+                                setPendingArray(doc.data().inbox)
+                                if(doc.data().inbox.includes(currentUser.uid+userID)){
+                                    setPending(true)
+                                }else{setPending(false);}
+                                
+                            }
+                            if(doc.data().friends != null){
+                                setFriendArray(doc.data().friends)
+                                if(doc.data().friends.includes(currentUser.uid)){
+                                    setFriends(true)
+                                }else{setFriends(false)}
+                            }
+                        }else if(doc.id === currentUser.uid){
+                            if(doc.data().inbox !=null){
+                                if(doc.data().inbox.includes(userID+currentUser.uid)){
+                                    setRequested(true)
+                                }else{setRequested(false)}
+                            }
+                        }
+                        if(friendArray.includes(doc.id)){
+                            let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
+                            imageRef
+                            .then((url) => {
+                                tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
+                                setURL(url)
+                            })
+                            .catch((e) => console.log('getting downloadURL of image error => ', e));
+                        }
+                        setUsers(tempUserArray)
+                    })
+                    
+            });
+      }, []);
+
+      function loadFriends(){
         setModalVisible(true);
         if(onLoad === false){
             firebase.firestore()
@@ -321,221 +516,208 @@ export default function ProfileScreen({navigation}){
                 .then((docs) => {
                     if (onLoad === false) {
                         docs.forEach(doc => {
-
-                            if (pendingArray.includes(doc.id+currentUser.uid)) {
-                                let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
-                                imageRef
-                                    .then((url) => {
-                                        tempPendArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
-                                        setURL(url)
-                                    })
-                                    .catch((e) => console.log('getting downloadURL of image error => ', e));
-                            }
-                            if (friendArray.includes(doc.id)) {
-                                let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
-                                imageRef
+    
+                                if(friendArray.includes(doc.id)){
+                                    let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
+                                    imageRef
                                     .then((url) => {
                                         tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
                                         setURL(url)
                                     })
                                     .catch((e) => console.log('getting downloadURL of image error => ', e));
-                            }
-
+                                }
+                            
                         })
                         setUsers(tempUserArray)
-                        setPendUsers(tempPendArray)
                         }
                 });
                 setOnLoad(true);
         }
     }
-    
+
     function navigatePages(givenID){
+        
         if(givenID != currentUser.uid){
             setModalVisible(false)
             navigation.navigate('View Profile', { userID: givenID })
-        }else{
-            
-        }
+        }else{}
+    }
+    
+    
+    let temppostCount = 0;
+    const [postCount, setPostCount] = useState(0)
+    const getPostCount = firebase.firestore()
+        .collection('posts')
+        .doc(userID)
+        .collection('posts').get()
+        .then(query => {
+            temppostCount = query.size
+            setPostCount(temppostCount)
+        });
+
+    const [isPB, setIsPB] = useState(true)
+    const [benchPR, setBenchPR] = useState("")
+    const [benchDate, setBenchDate] = useState("")
+    const getBench = firebase.firestore()
+        .collection("personalRecords")
+        .doc(userID)
+        .collection("Barbell Bench Press").get()
+        .then(docs => {
+            docs.forEach(doc => {
+                //tempBench.push({weight:doc.data().weight, date:doc.data().date})
+                setBenchPR(doc.data().weight);
+                setBenchDate(doc.data().date)
+
+            })
+        })
+
+    const [squatPR, setSquatPR] = useState("")
+    const [squatDate, setSquatDate] = useState("")
+    const getSquat = firebase.firestore()
+        .collection("personalRecords")
+        .doc(userID)
+        .collection("Barbell Squat").get()
+        .then(docs => {
+            docs.forEach(doc => {
+                setSquatPR(doc.data().weight);
+                setSquatDate(doc.data().date)
+
+            })
+        })
+
+    const [deadliftPR, setDeadliftPR] = useState("")
+    const [deadliftDate, setDeadliftDate] = useState("")
+    const getDeadlift = firebase.firestore()
+        .collection("personalRecords")
+        .doc(userID)
+        .collection("Deadlift").get()
+        .then(docs => {
+            docs.forEach(doc => {
+                setDeadliftPR(doc.data().weight);
+                setDeadliftDate(doc.data().date)
+            })
+        })
+
+    const [speedRunSpeed, setSpeedRunSpeed] = useState("")
+    const [speedRunTime, setSpeedRunTime] = useState("")
+    const [speedRunDistance, setSpeedRunDistance] = useState("")
+    const [speedRunDate, setSpeedRunDate] = useState("")
+    const getSpeedRun = firebase.firestore()
+        .collection("personalRecords")
+        .doc(userID)
+        .collection("Run").get()
+        .then(docs => {
+            docs.forEach(doc => {
+                if (doc.id === "SPEED") {
+                    setSpeedRunSpeed(doc.data().speed);
+                    setSpeedRunTime(doc.data().time);
+                    setSpeedRunDistance(doc.data().distance);
+                    setSpeedRunDate(doc.data().date)
+                }
+            })
+        })
+
+    const [distanceRunSpeed, setDistanceRunSpeed] = useState("")
+    const [distanceRunTime, setDistanceRunTime] = useState("")
+    const [distanceRunDistance, setDistanceRunDistance] = useState("")
+    const [distanceRunDate, setDistanceRunDate] = useState("")
+    const getDistanceRun = firebase.firestore()
+        .collection("personalRecords")
+        .doc(userID)
+        .collection("Run").get()
+        .then(docs => {
+            docs.forEach(doc => {
+                if (doc.id === "DISTANCE") {
+                    setDistanceRunSpeed(doc.data().speed);
+                    setDistanceRunTime(doc.data().time);
+                    setDistanceRunDistance(doc.data().distance);
+                    setDistanceRunDate(doc.data().date);
+                }
+            })
+        })
+
+    const [speedCycleSpeed, setSpeedCycleSpeed] = useState("")
+    const [speedCycleTime, setSpeedCycleTime] = useState("")
+    const [speedCycleDistance, setSpeedCycleDistance] = useState("")
+    const [speedCycleDate, setSpeedCycleDate] = useState("")
+    const getSpeedCycle = firebase.firestore()
+        .collection("personalRecords")
+        .doc(userID)
+        .collection("Cycle").get()
+        .then(docs => {
+            docs.forEach(doc => {
+                if (doc.id === "SPEED") {
+                    setSpeedCycleSpeed(doc.data().speed);
+                    setSpeedCycleTime(doc.data().time);
+                    setSpeedCycleDistance(doc.data().distance);
+                    setSpeedCycleDate(doc.data().date)
+                }
+            })
+        })
+
+    const [distanceCycleSpeed, setDistanceCycleSpeed] = useState("")
+    const [distanceCycleTime, setDistanceCycleTime] = useState("")
+    const [distanceCycleDistance, setDistanceCycleDistance] = useState("")
+    const [distanceCycleDate, setDistanceCycleDate] = useState("")
+    const getDistanceCycle = firebase.firestore()
+        .collection("personalRecords")
+        .doc(userID)
+        .collection("Cycle").get()
+        .then(docs => {
+            docs.forEach(doc => {
+                if (doc.id === "DISTANCE") {
+                    setDistanceCycleSpeed(doc.data().speed);
+                    setDistanceCycleTime(doc.data().time);
+                    setDistanceCycleDistance(doc.data().distance);
+                    setDistanceCycleDate(doc.data().date);
+                }
+            })
+        })
+
+    const [speedWalkSpeed, setSpeedWalkSpeed] = useState("")
+    const [speedWalkTime, setSpeedWalkTime] = useState("")
+    const [speedWalkDistance, setSpeedWalkDistance] = useState("")
+    const [speedWalkDate, setSpeedWalkDate] = useState("")
+    const getSpeedWalk = firebase.firestore()
+        .collection("personalRecords")
+        .doc(userID)
+        .collection("Walk").get()
+        .then(docs => {
+            docs.forEach(doc => {
+                if (doc.id === "SPEED") {
+                    setSpeedWalkSpeed(doc.data().speed);
+                    setSpeedWalkTime(doc.data().time);
+                    setSpeedWalkDistance(doc.data().distance);
+                    setSpeedWalkDate(doc.data().date)
+                }
+            })
+        })
+
+    const [distanceWalkSpeed, setDistanceWalkSpeed] = useState("")
+    const [distanceWalkTime, setDistanceWalkTime] = useState("")
+    const [distanceWalkDistance, setDistanceWalkDistance] = useState("")
+    const [distanceWalkDate, setDistanceWalkDate] = useState("")
+    const getDistanceWalk = firebase.firestore()
+        .collection("personalRecords")
+        .doc(userID)
+        .collection("Walk").get()
+        .then(docs => {
+            docs.forEach(doc => {
+                if (doc.id === "DISTANCE") {
+                    setDistanceWalkSpeed(doc.data().speed);
+                    setDistanceWalkTime(doc.data().time);
+                    setDistanceWalkDistance(doc.data().distance);
+                    setDistanceWalkDate(doc.data().date);
+                }
+            })
+        })
+    const [isRewardVisible, setIsRewardVisible] = useState(false)
+    const [rewardCount, setRewardCount] = useState(0)
+    const [rewards, setRewards] = useState([])
+    function loadRewards() {
+        setIsRewardVisible(true)
     }
 
-  let temppostCount = 0;
-  const [postCount, setPostCount] = useState(0)
-  const getPostCount = firebase.firestore()
-      .collection('posts')
-      .doc(currentUser.uid)
-      .collection('posts').get()
-      .then(query => {
-        temppostCount = query.size
-        setPostCount(temppostCount)
-      });
-  
-  const [isPB, setIsPB] = useState(true)
-  const [benchPR, setBenchPR] = useState("")
-  const [benchDate, setBenchDate] = useState("")
-  const getBench = firebase.firestore()
-      .collection("personalRecords")
-      .doc(currentUser.uid)
-      .collection("Barbell Bench Press").get()
-      .then(docs=>{
-        docs.forEach(doc=>{
-          //tempBench.push({weight:doc.data().weight, date:doc.data().date})
-          setBenchPR(doc.data().weight);
-          setBenchDate(doc.data().date)
-          
-        })
-      })
-
-  const [squatPR, setSquatPR] = useState("")
-  const [squatDate, setSquatDate] = useState("")
-  const getSquat = firebase.firestore()
-    .collection("personalRecords")
-    .doc(currentUser.uid)
-    .collection("Barbell Squat").get()
-    .then(docs => {
-      docs.forEach(doc => {
-        setSquatPR(doc.data().weight);
-        setSquatDate(doc.data().date)
-
-      })
-    })
-
-  const [deadliftPR, setDeadliftPR] = useState("")
-  const [deadliftDate, setDeadliftDate] = useState("")
-  const getDeadlift = firebase.firestore()
-    .collection("personalRecords")
-    .doc(currentUser.uid)
-    .collection("Deadlift").get()
-    .then(docs => {
-      docs.forEach(doc => {
-        setDeadliftPR(doc.data().weight);
-        setDeadliftDate(doc.data().date)
-      })
-    })
-
-  const [speedRunSpeed, setSpeedRunSpeed] = useState("")
-  const [speedRunTime, setSpeedRunTime] = useState("")
-  const [speedRunDistance, setSpeedRunDistance] = useState("")
-  const [speedRunDate, setSpeedRunDate] = useState("")
-  const getSpeedRun = firebase.firestore()
-    .collection("personalRecords")
-    .doc(currentUser.uid)
-    .collection("Run").get()
-    .then(docs => {
-      docs.forEach(doc => {
-        if(doc.id === "SPEED"){
-          setSpeedRunSpeed(doc.data().speed);
-          setSpeedRunTime(doc.data().time);
-          setSpeedRunDistance(doc.data().distance);
-          setSpeedRunDate(doc.data().date)
-        }
-      })
-    })
-
-  const [distanceRunSpeed, setDistanceRunSpeed] = useState("")
-  const [distanceRunTime, setDistanceRunTime] = useState("")
-  const [distanceRunDistance, setDistanceRunDistance] = useState("")
-  const [distanceRunDate, setDistanceRunDate] = useState("")
-  const getDistanceRun = firebase.firestore()
-    .collection("personalRecords")
-    .doc(currentUser.uid)
-    .collection("Run").get()
-    .then(docs => {
-      docs.forEach(doc => {
-        if (doc.id === "DISTANCE") {
-          setDistanceRunSpeed(doc.data().speed);
-          setDistanceRunTime(doc.data().time);
-          setDistanceRunDistance(doc.data().distance);
-          setDistanceRunDate(doc.data().date);
-        }
-      })
-    })
-
-  const [speedCycleSpeed, setSpeedCycleSpeed] = useState("")
-  const [speedCycleTime, setSpeedCycleTime] = useState("")
-  const [speedCycleDistance, setSpeedCycleDistance] = useState("")
-  const [speedCycleDate, setSpeedCycleDate] = useState("")
-  const getSpeedCycle = firebase.firestore()
-    .collection("personalRecords")
-    .doc(currentUser.uid)
-    .collection("Cycle").get()
-    .then(docs => {
-      docs.forEach(doc => {
-        if (doc.id === "SPEED") {
-          setSpeedCycleSpeed(doc.data().speed);
-          setSpeedCycleTime(doc.data().time);
-          setSpeedCycleDistance(doc.data().distance);
-          setSpeedCycleDate(doc.data().date)
-        }
-      })
-    })
-
-  const [distanceCycleSpeed, setDistanceCycleSpeed] = useState("")
-  const [distanceCycleTime, setDistanceCycleTime] = useState("")
-  const [distanceCycleDistance, setDistanceCycleDistance] = useState("")
-  const [distanceCycleDate, setDistanceCycleDate] = useState("")
-  const getDistanceCycle = firebase.firestore()
-    .collection("personalRecords")
-    .doc(currentUser.uid)
-    .collection("Cycle").get()
-    .then(docs => {
-      docs.forEach(doc => {
-        if (doc.id === "DISTANCE") {
-          setDistanceCycleSpeed(doc.data().speed);
-          setDistanceCycleTime(doc.data().time);
-          setDistanceCycleDistance(doc.data().distance);
-          setDistanceCycleDate(doc.data().date);
-        }
-      })
-    })
-
-  const [speedWalkSpeed, setSpeedWalkSpeed] = useState("")
-  const [speedWalkTime, setSpeedWalkTime] = useState("")
-  const [speedWalkDistance, setSpeedWalkDistance] = useState("")
-  const [speedWalkDate, setSpeedWalkDate] = useState("")
-  const getSpeedWalk = firebase.firestore()
-    .collection("personalRecords")
-    .doc(currentUser.uid)
-    .collection("Walk").get()
-    .then(docs => {
-      docs.forEach(doc => {
-        if (doc.id === "SPEED") {
-          setSpeedWalkSpeed(doc.data().speed);
-          setSpeedWalkTime(doc.data().time);
-          setSpeedWalkDistance(doc.data().distance);
-          setSpeedWalkDate(doc.data().date)
-        }
-      })
-    })
-
-  const [distanceWalkSpeed, setDistanceWalkSpeed] = useState("")
-  const [distanceWalkTime, setDistanceWalkTime] = useState("")
-  const [distanceWalkDistance, setDistanceWalkDistance] = useState("")
-  const [distanceWalkDate, setDistanceWalkDate] = useState("")
-  const getDistanceWalk = firebase.firestore()
-    .collection("personalRecords")
-    .doc(currentUser.uid)
-    .collection("Walk").get()
-    .then(docs => {
-      docs.forEach(doc => {
-        if (doc.id === "DISTANCE") {
-          setDistanceWalkSpeed(doc.data().speed);
-          setDistanceWalkTime(doc.data().time);
-          setDistanceWalkDistance(doc.data().distance);
-          setDistanceWalkDate(doc.data().date);
-        }
-      })
-    })
-
-
-  const [isRewardVisible, setIsRewardVisible] = useState(false)
-  const [rewardCount, setRewardCount] = useState(0)
-  const [rewards, setRewards] = useState([])
-  function loadRewards(){
-    setIsRewardVisible(true)
-  }
-
-    
     return(
         <ScrollView style={styles.container}>
             <View style={styles.titleContainer}>
@@ -544,7 +726,7 @@ export default function ProfileScreen({navigation}){
 
             <View style={styles.infoContainer}>
                 <Pressable style={styles.profilePicFormat}
-                onPress={pickImage}>
+                >
                     <ImageBackground style = {styles.profilePicDefault}
                     source={require('../../assets/profiledefault.png')}>
                         <Image
@@ -553,10 +735,6 @@ export default function ProfileScreen({navigation}){
                         />
                     </ImageBackground>
                         
-                    <Image 
-                        style={styles.addPic}
-                        source={require('../../assets/addimage.png')}
-                    />
                 </Pressable>
                 <TouchableOpacity
                     style={styles.infoButton}
@@ -577,10 +755,22 @@ export default function ProfileScreen({navigation}){
             <View style={styles.bioContainer}>
                 <Text style={styles.displayNameText}>{displayName}</Text>
                 <Text style={styles.bioText}>{Bio}</Text>
-                <TouchableOpacity 
-                style={styles.editButton}>
-                    <Text style={styles.editText}>Edit Profile</Text>
-                </TouchableOpacity>
+                { friends === true ? 
+                    <TouchableOpacity style={styles.editButton}>
+                        <Text style={styles.editText}>Friend</Text>
+                    </TouchableOpacity>
+                    : pending === true ?
+                        <TouchableOpacity style={styles.editButton} onPress={() => deletePending()}>
+                            <Text style={styles.editText}>Friend Request Sent</Text>
+                        </TouchableOpacity>
+                        : requested === true ? 
+                        <TouchableOpacity style={styles.editButton} onPress={() => confirmFriend()}>
+                            <Text style={styles.editText}>Confirm Friend Request</Text>
+                        </TouchableOpacity>
+                        :<TouchableOpacity style={styles.editButton} onPress={() => addFriend()}>
+                            <Text style={styles.editText}>Send Friend Request</Text>
+                        </TouchableOpacity>}
+                
             </View>
             <Modal
             animationType="slide"
@@ -592,28 +782,7 @@ export default function ProfileScreen({navigation}){
           >
             <View style={styles.friendsContainerView}>
             <ScrollView style={styles.friendsView}>
-            <Text style={{marginTop:10, alignSelf: 'center', fontSize: 20, fontWeight: 'bold', marginBottom: 10,}}>Pending Friend Requests ({pendUsers.length})</Text>
-            {pendUsers.map((u, key) => ( 
-                
-                    <Pressable style={styles.userContainer} onPress={() => navigatePages(u.id)}>
-                        <ImageBackground style={styles.profilePicDefault}
-                            source={require('../../assets/profiledefault.png')}>
-                            <Image
-                                style={styles.profilePic}
-                                source={{ uri: u.url }}
-                            />
-                        </ImageBackground>
-                        <View style={{ justifyContent: 'center', marginBottom: 5 }}>
-                            <Text style={styles.displayNameText}>{u.displayName}</Text>
-                            <Text style={styles.userNameText}>{u.userName}</Text>
-
-
-
-                        </View>
-                    </Pressable>
-                
-            ))}
-                <Text style={{marginTop:10, alignSelf: 'center', fontSize: 20, fontWeight: 'bold', marginBottom: 10,}}>Friends</Text>
+            <Text style={{marginTop:10, alignSelf: 'center', fontSize: 20, fontWeight: 'bold', marginBottom: 10,}}>Friends</Text>
             {users.map((u, key) => ( 
                 
                     <Pressable style={styles.userContainer} onPress={() => navigatePages(u.id)}>
@@ -627,9 +796,6 @@ export default function ProfileScreen({navigation}){
                         <View style={{ justifyContent: 'center', marginBottom: 5 }}>
                             <Text style={styles.displayNameText}>{u.displayName}</Text>
                             <Text style={styles.userNameText}>{u.userName}</Text>
-
-
-
                         </View>
                     </Pressable>
                 
@@ -642,8 +808,7 @@ export default function ProfileScreen({navigation}){
                 </Pressable>
               </ScrollView>
             </View>
-          </Modal>
-      {isPB === true ?
+          </Modal>{isPB === true ?
       <View>
         <View style={{flexDirection:'row'}}>
           <Pressable style={styles.PRButton} onPress={()=>setIsPB(true)}>
@@ -864,8 +1029,9 @@ export default function ProfileScreen({navigation}){
             ))}
 
         </View>
+      
       }
-      <Modal
+        <Modal
             animationType="slide"
             transparent={true}
             visible={isRewardVisible}
@@ -876,7 +1042,7 @@ export default function ProfileScreen({navigation}){
             <View style={styles.rewardContainerView}>
             <ScrollView style={styles.rewardView}>
             {rewards.length === 0 &&
-                <Text style={{fontSize:15, marginTop: 100, marginLeft: 5, textAlign: 'center'}}>You do not currently{"\n"}have any rewards</Text>
+                <Text style={{fontSize:15, marginTop: 100, marginLeft: 5, textAlign: 'center'}}>This user does not currently{"\n"}have any rewards</Text>
             }
             {rewards.map(r=>( r.id === "1ton"?
               <View style={{flexDirection:'row'}}>
@@ -979,7 +1145,7 @@ export default function ProfileScreen({navigation}){
             </ScrollView>
             </View>
           </Modal>
-      </ScrollView>
+        </ScrollView>
     );
 }
 
@@ -1096,26 +1262,6 @@ const styles = StyleSheet.create({
         width: 300,
         
       },
-      rewardContainerView: {
-        flex: 1,
-        marginTop: 22,
-        alignItems: "center",
-        justifyContent: "center",
-        shadowColor: "#000",
-        shadowOffset: {
-          width: 0,
-          height: 2
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
-      },
-      rewardView: {
-        margin: 20,
-        backgroundColor: "white",
-        borderRadius: 20,
-        width: 320,
-      },
       buttonCloseModal:{
         backgroundColor: 'red',
         height: 50,
@@ -1171,6 +1317,27 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginTop: 30,
         marginLeft: 40,
+        
+      },
+      rewardContainerView: {
+        flex: 1,
+        marginTop: 22,
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      },
+      rewardView: {
+        margin: 20,
+        backgroundColor: "white",
+        borderRadius: 20,
+        width: 320,
       },
       PRButton: {
         height: 60,

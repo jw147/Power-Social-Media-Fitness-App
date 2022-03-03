@@ -1,5 +1,5 @@
 import * as React from 'react';
-
+import { StyleSheet, Text, View, Button, Pressable, Image } from 'react-native';
 import { NavigationContainer, StackActions, TabActions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons'
@@ -21,6 +21,7 @@ import ExerciseScreen from './screens/ExerciseScreen';
 import SetProfileScreen from './screens/SetProfile';
 import EditProfileScreen from './screens/EditProfileScreen';
 import ProgressScreen from './screens/ProgressScreen';
+import ViewProfileScreen from './screens/ViewProfileScreen';
 
 
 const homeName = 'Home';
@@ -43,17 +44,38 @@ function HomeScreens() {
     )
 }
 
+function SearchScreens() {
+    return(
+        <Stack.Navigator>
+            <Stack.Screen options={{ headerShown: false}} name={"Search Screen"} component={SearchScreen}/>
+            <Stack.Screen options={{headerTintColor: "white", headerStyle: {backgroundColor: '#00a1d0'}}} name="View Profile" component={ViewProfileScreen}/>
+            <Stack.Screen options={{ headerShown: false}} name={"Profile Screen"} component={ProfileScreen}/>
+        </Stack.Navigator>
+    )
+}
+
 function ProfileScreens() {
     return(
         <Stack.Navigator>
             <Stack.Screen options={{ headerShown: false}} name={"Profile Screen"} component={ProfileScreen}/>
             <Stack.Screen name="Configure Profile" component={SetProfileScreen}/>
             <Stack.Screen name="Edit Profile" component={EditProfileScreen}/>
+            <Stack.Screen options={{headerTintColor: "white", headerStyle: {backgroundColor: '#00a1d0'}}} name="View Profile" component={ViewProfileScreen}/>
         </Stack.Navigator>
     )
 }
 
-export default function MainContainer(){
+export default function MainContainer({navigation}){
+
+    React.useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <Pressable style={styles.message} onPress={()=> navigation.navigate("Messages")}>
+                    <Image style={{ width: 40, height: 30 }} source={require("../assets/message.png")}></Image>
+                </Pressable>
+            )
+        })
+    })
     return(
         <NavigationContainer
         independent={true}>
@@ -85,7 +107,7 @@ export default function MainContainer(){
                 },
             })}>
                 <Tab.Screen name={homeName} component={HomeScreens}/>
-                <Tab.Screen name={searchName} component={SearchScreen}/>
+                <Tab.Screen name={searchName} component={SearchScreens}/>
                 <Tab.Screen name={feedName} component={FeedScreen}/>
                 <Tab.Screen name={leaderboardName} component={LeaderboardScreen}/>
                 <Tab.Screen name={profileName} component={ProfileScreens}/>
@@ -94,3 +116,15 @@ export default function MainContainer(){
         </NavigationContainer>
     );
 }
+const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#fff',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    message: {
+      marginLeft: 'auto',
+      marginTop: 0
+    }
+  });
