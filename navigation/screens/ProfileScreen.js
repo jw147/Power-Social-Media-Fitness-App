@@ -6,6 +6,7 @@ import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import LottieView from 'lottie-react-native';
 
 export default function ProfileScreen({navigation}){
 
@@ -144,8 +145,10 @@ export default function ProfileScreen({navigation}){
     const [tWeights, setTWeights] = useState([]);
     const [posts, setPosts] = useState([]);
 
+    const [loading, setLoading] = useState(true) 
     useEffect(() => {
-        firebase.firestore()
+      const getDatabase = async () => {
+        await firebase.firestore()
             .collection('users').get()
             .then((docs) => {
                     docs.forEach(doc => {
@@ -277,7 +280,7 @@ export default function ProfileScreen({navigation}){
       let tempWeightsArray = [];
       let tempCardioArray = [];
       var tempPosts = [];
-      firebase.firestore()
+      await firebase.firestore()
         .collection('posts')
         .doc(currentUser.uid)
         .collection('posts').get()
@@ -310,8 +313,9 @@ export default function ProfileScreen({navigation}){
           tempPosts.sort((a, b) => b.date - a.date)
           setPosts(tempPosts);
         })
-
-      }, []);
+      }
+      getDatabase().then(()=>setLoading(false))
+      }, [loading]);
 
     function loadFriends(){
         setModalVisible(true);
@@ -535,7 +539,10 @@ export default function ProfileScreen({navigation}){
     setIsRewardVisible(true)
   }
 
-    
+  if (loading) {
+    //add splash
+    return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
+    } 
     return(
         <ScrollView style={styles.container}>
             <View style={styles.titleContainer}>
@@ -578,7 +585,8 @@ export default function ProfileScreen({navigation}){
                 <Text style={styles.displayNameText}>{displayName}</Text>
                 <Text style={styles.bioText}>{Bio}</Text>
                 <TouchableOpacity 
-                style={styles.editButton}>
+                style={styles.editButton}
+                onPress={()=> navigation.navigate("Edit Profile")}>
                     <Text style={styles.editText}>Edit Profile</Text>
                 </TouchableOpacity>
             </View>

@@ -25,19 +25,10 @@ export default function HomeScreen({navigation}){
 
           <Pressable
             style={styles.button}
-            onPress={() => Alert.alert('Diet Page')}>
+            onPress={() => navigation.navigate('Diet')}>
             <Image
               style={styles.buttonProperties}
               source={require('../../assets/HomeScreen/diet.png')}
-            />
-          </Pressable>
-
-          <Pressable
-            style={styles.button}
-            onPress={() => Alert.alert('Learn Page')}>
-            <Image
-              style={styles.buttonProperties}
-              source={require('../../assets/HomeScreen/learn.png')}
             />
           </Pressable>
 

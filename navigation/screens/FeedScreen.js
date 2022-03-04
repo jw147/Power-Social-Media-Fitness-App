@@ -5,7 +5,7 @@ import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getDatabase, set } from 'firebase/database';
-
+import LottieView from 'lottie-react-native';
 
 
 export default function FeedScreen({navigation}){
@@ -103,10 +103,10 @@ export default function FeedScreen({navigation}){
             }, [loading]);
 
     
-    if(loading){
+    if (loading) {
         //add splash
-        return(<Text>Loading</Text>)
-    }
+        return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
+    } 
     return(
         <ScrollView style={styles.container}>
             { posts.length > 0 && posts.map((p, key) => (    p.weights === undefined ?

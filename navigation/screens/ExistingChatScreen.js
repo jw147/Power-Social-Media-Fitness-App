@@ -3,6 +3,7 @@ import React, {useState, useEffect} from 'react';
 import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import LottieView from 'lottie-react-native';
 
 export default function ChatScreen({route, navigation}){
   const date = new Date();
@@ -19,17 +20,39 @@ export default function ChatScreen({route, navigation}){
   const [messageArray, setMessageArray] = useState([]);
 
 
-  const getMessages = firebase.firestore()
-    .collection('chatrooms')
-    .doc(userID.title)
-    .collection('chats')
-    .get()
-    .then((docs) => {
-      docs.forEach(doc => {
-        tempMessageArray.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time })
-      })
-      setMessageArray(tempMessageArray);
-    });
+  // const getMessages = firebase.firestore()
+  //   .collection('chatrooms')
+  //   .doc(userID.title)
+  //   .collection('chats')
+  //   .get()
+  //   .then((docs) => {
+  //     docs.forEach(doc => {
+  //       tempMessageArray.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time })
+  //     })
+  //     setMessageArray(tempMessageArray);
+  //   });
+
+    const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const getDatabase = async() =>{
+      await firebase.firestore()
+        .collection('chatrooms')
+        .doc(userID.title)
+        .collection('chats')
+        .get()
+        .then((docs) => {
+          docs.forEach(doc => {
+            tempMessageArray.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time })
+          })
+          setMessageArray(tempMessageArray);
+        });
+    }
+    getDatabase().then(()=>setLoading(false))
+    
+        
+
+    
+  }, [loading]);
 
   function sendMessage(){
     //firebase here
@@ -65,6 +88,10 @@ export default function ChatScreen({route, navigation}){
         });
   }
 
+  if (loading) {
+    //add splash
+    return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
+    } 
     return (
       <KeyboardAvoidingView style={styles.container} keyboardVerticalOffset = "50" behavior={Platform.OS === "ios" ? "padding" : "height"}>
 

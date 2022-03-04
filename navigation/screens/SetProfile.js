@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView } from 'react-native'
 
 import firebase from 'firebase/compat';
@@ -127,12 +127,12 @@ export default function SetProfile({navigation}){
                         style={styles.textInput}
                         placeholder="Enter Your Current Weight"
                     />
-                    <Text style={styles.textTitle}>Current Goals</Text>
+                    <Text style={styles.textTitle}>Frequency of Physical Activity Before Study</Text>
                     <TextInput
                         onChangeText={text => setGoals(text)}
                         value={goalsInput}
                         style={styles.textInput}
-                        placeholder="Enter Your Current Goals"
+                        placeholder="E.g. once a week, twice a week, etc."
                     />
                     <Text style={styles.textTitle}>Age</Text>
                     <TextInput

@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, ImageBackground, Pressable } from 'react-native';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 
-
+import LottieView from 'lottie-react-native';
 import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { set } from 'firebase/database';
 
 let tempUserArray = [];
+var t=[];
 export default function SearchScreen({navigation}){
     const currentUser = firebase.auth().currentUser;
     const db = firebase.firestore();
@@ -23,24 +24,31 @@ export default function SearchScreen({navigation}){
     const [search, setSearch] = useState('');
     const [requestedArray, setRequestedArray] = useState([]);
     let tempReq = [];
-
+    
+    const [loading, setLoading] = useState(true)
     useEffect(() => {
-        firebase.firestore()
+        const getDatabase = async () => {
+            
+        await firebase.firestore()
             .collection('users').get()
             .then((docs) => {
-                if (onLoad === false) {
+                
                     docs.forEach(doc => {
                         if (doc.id != currentUser.uid) {
-                            let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
-                            imageRef
-                            .then((url) => {
-                                
-                                tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
-                                setURL(url)
-                            })
-                            .catch((e) => console.log('getting downloadURL of image error => ', e));
-                            if(doc.data().inbox != null){
-                                    setPendingArray(doc.data().inbox);
+                            if(t.includes(doc.id) === false){
+
+                                t.push(doc.id)
+                                let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
+                                imageRef
+                                .then((url) => {
+                                        tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
+                                        setURL(url)
+                                    
+                                })
+                                .catch((e) => console.log('getting downloadURL of image error => ', e));
+                                if(doc.data().inbox != null){
+                                        setPendingArray(doc.data().inbox);
+                                }
                             }
                         }else{
                             if(doc.data().friends != null){
@@ -53,11 +61,13 @@ export default function SearchScreen({navigation}){
                             }
                         }
                         })
+                        
                         setUsers(tempUserArray)
                         setRequestedArray(tempReq)
-                    }
             });
-      }, []);
+        }
+        getDatabase().then(()=>setLoading(false))
+      }, [loading]);
 
       function confirmFriend(friendID, name) {
         alert(name + " has been added as a friend!");
@@ -349,7 +359,10 @@ export default function SearchScreen({navigation}){
                         })
             });
       }
-
+      if (loading) {
+        //add splash
+        return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
+        } 
       return(
         <View style={styles.container}>
             <View style={{borderBottomColor: 'black', borderBottomWidth: 1, paddingBottom: 15}}>

@@ -6,6 +6,7 @@ import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import LottieView from 'lottie-react-native';
 
 export default function ProfileScreen({route, navigation}){
     
@@ -16,7 +17,8 @@ export default function ProfileScreen({route, navigation}){
     const [displayName, setDisplayName] = useState('')
     const [Bio, setBio] = useState('')
 
-    const {userID} = route.params;
+    var tempUserID = route.params;
+    const [userID, setUserID] = useState(String(route.params.userID))
 
     function getUserName(documentSnapshot) {
         return documentSnapshot.get('username');
@@ -82,181 +84,7 @@ export default function ProfileScreen({route, navigation}){
     const [tCardio, setTCardio] = useState([]);
     const [tWeights, setTWeights] = useState([]);
     const [posts, setPosts] = useState([]);
-
-    useEffect(() => {
-        // firebase.firestore()
-        //     .collection('users').get()
-        //     .then((docs) => {
-        //             docs.forEach(doc => {
-        //                 if (doc.id == userID) {
-        //                     if(doc.data().inbox != null){
-        //                             if(doc.data().inbox.includes(currentUser.uid+userID)){
-        //                                 setPending(true)
-        //                                 setPendingArray(doc.data().inbox)
-        //                             }else{setPending(false)}
-        //                     }
-        //                     if(doc.data().friends != null){
-        //                         if(doc.data().friends.includes(currentUser.uid+userID)){
-        //                             setFriends(true)
-        //                             setFriendArray(doc.data().friends)
-        //                         }else{setFriends(false)}
-        //                     }
-        //                 }
-        //                 if(friendArray.includes(doc.id)){
-        //                     let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
-        //                     imageRef
-        //                     .then((url) => {
-        //                         tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
-        //                         setURL(url)
-        //                     })
-        //                     .catch((e) => console.log('getting downloadURL of image error => ', e));
-        //                 }
-        //                 setUsers(tempUserArray)
-        //                 })
-                    
-        //     });
-        let tempWeightsArray = [];
-      let tempCardioArray = [];
-      var tempPosts = [];
-      firebase.firestore()
-        .collection('posts')
-        .doc(userID)
-        .collection('posts').get()
-        .then((docs) => {
-          docs.forEach(doc => {
-            if (doc.data().post == null) {
-
-              tempCardioArray.push({
-                calories: doc.data().calories, wName: doc.data().cardio, date: doc.data().date.seconds, distance: doc.data().distance,
-                speed: doc.data().speed, time: doc.data().time, id: currentUser.uid
-              })
-            }
-            else {
-              tempWeightsArray.push({ weights: doc.data().post, id: currentUser.uid, date: doc.data().post[0].date.seconds })
-            }
-          })
-          setTWeights(tempWeightsArray)
-          setTCardio(tempCardioArray)
-          for (var i = 0; i < tempCardioArray.length; i++) {
-            if (tempPosts.includes(tempCardioArray[i]) === false) {
-
-              tempPosts.push(tempCardioArray[i])
-            }
-          }
-          for (var i = 0; i < tempWeightsArray.length; i++) {
-            if (tempPosts.includes(tempWeightsArray[i]) === false) {
-              tempPosts.push(tempWeightsArray[i])
-            }
-          }
-          tempPosts.sort((a, b) => b.date - a.date)
-          setPosts(tempPosts);
-        })
-
-        let tempRewardCount = 0;
-        let tempRewards = [];
-        firebase.firestore()
-        .collection('rewards')
-        .doc(userID)
-        .collection('distance').get()
-        .then(docs=>{
-          docs.forEach(doc=>{
-            if(doc.data().two === true){
-              tempRewardCount++;
-              tempRewards.push({url: '../../assets/rewards/2km.png', description: 'You Have Travelled 2km!', id:'2km', priority: 16})
-              if(doc.data().five === true){
-                tempRewardCount++;
-                tempRewards.push({url: '../../assets/rewards/5km.png', description: 'You Have Travelled 5km!', id:'5km', priority: 14})
-                if(doc.data().ten === true){
-                  tempRewardCount++;
-                  tempRewards.push({url: '../../assets/rewards/10km.png', description: 'You Have Travelled 10km!', id:'10km', priority: 11})
-                  if(doc.data().fifteen === true){
-                    tempRewardCount++;
-                    tempRewards.push({url: '../../assets/rewards/15km.png', description: 'You Have Travelled 15km!', id:'15km', priority: 8})
-                    if(doc.data().twenty === true){
-                      tempRewardCount++;
-                      tempRewards.push({url: '../../assets/rewards/20km.png', description: 'You Have Travelled 20km!', id:'20km', priority: 5})
-                      if(doc.data().thirty === true){
-                        tempRewardCount++;
-                        tempRewards.push({url: '../../assets/rewards/30km.png', description: 'You Have Travelled 30km!', id:'30km', priority: 2})
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          })
-          firebase.firestore()
-            .collection('rewards')
-            .doc(userID)
-            .collection('weights').get()
-            .then(docs => {
-              docs.forEach(doc => {
-                if (doc.data().one === true) {
-                  tempRewardCount++;
-                  tempRewards.push({url: '../../assets/rewards/1ton.png', description: 'You Have Lifted 1ton!', id:'1ton', priority: 13})
-                  if (doc.data().two === true) {
-                    tempRewardCount++;
-                    tempRewards.push({url: '../../assets/rewards/2tons.png', description: 'You Have Lifted 2ton!', id:'2ton', priority: 10})
-                    if (doc.data().ten === true) {
-                      tempRewardCount++;
-                      tempRewards.push({url: '../../assets/rewards/10tons.png', description: 'You Have Lifted 10tons!', id:'10ton', priority: 7})
-                      if (doc.data().twenty === true) {
-                        tempRewardCount++;
-                        tempRewards.push({url: '../../assets/rewards/20tons.png', description: 'You Have Lifted 20tons!', id:'20ton', priority: 4})
-                        if (doc.data().fifty === true) {
-                          tempRewardCount++;
-                          tempRewards.push({url: '../../assets/rewards/50ton.png', description: 'You Have Lifted 50tons!', id:'50ton', priority: 1})
-                        }
-                      }
-                    }
-                  }
-                }
-              })
-              firebase.firestore()
-                .collection('rewards')
-                .doc(userID)
-                .collection('calories').get()
-                .then(docs => {
-                  docs.forEach(doc => {
-                    if (doc.data().half === true) {
-                      tempRewardCount++;
-                      tempRewards.push({url: '../../assets/rewards/500kcal.png', description: 'You Have Burned 500kcal!', id:'halfkcal', priority: 18})
-                      if (doc.data().one === true) {
-                        tempRewardCount++;
-                        tempRewards.push({url: '../../assets/rewards/1Kkcal.png', description: 'You Have Burned 1000kcal!', id:'1Kkcal', priority: 17})
-                        if (doc.data().two === true) {
-                          tempRewardCount++;
-                          tempRewards.push({url: '../../assets/rewards/2Kkcal.png', description: 'You Have Burned 2000kcal!', id:'2Kkcal', priority: 15})
-                          if (doc.data().threehalf === true) {
-                            tempRewardCount++;
-                            tempRewards.push({url: '../../assets/rewards/3halfKkcal.png', description: 'You Have Burned 3500kcal!', id:'3halfKkcal', priority: 12})
-                            if (doc.data().five === true) {
-                              tempRewardCount++;
-                              tempRewards.push({url: '../../assets/rewards/5Kkcal.png', description: 'You Have Burned 5000kcal!', id:'5Kkcal', priority: 9})
-                              if (doc.data().seven === true) {
-                                tempRewardCount++;
-                                tempRewards.push({url: '../../assets/rewards/7Kkcal.png', description: 'You Have Burned 7000kcal!', id:'7Kkcal', priority: 6})
-                                if (doc.data().ten === true) {
-                                  tempRewardCount++;
-                                  tempRewards.push({url: '../../assets/rewards/10Kkcal.png', description: 'You Have Burned 10000kcal!', id:'10Kkcal', priority: 3})
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  })
-                  tempRewards.sort((a, b) => a.priority - b.priority)
-                  setRewardCount(tempRewardCount)
-                  setRewards(tempRewards)
-                })
-            })
-          })
-      }, []);
-
-
-    
+   
 
       function addFriend() {
         alert(displayName + " has been sent a friend request!");
@@ -467,7 +295,9 @@ export default function ProfileScreen({route, navigation}){
     const [url, setURL] = useState("");
     let tempUserArray = [];
 
+    const [loading, setLoading] = useState(true) 
     useEffect(() => {
+      const getDatabase = async () => {
         firebase.firestore()
             .collection('users').get()
             .then((docs) => {
@@ -506,7 +336,326 @@ export default function ProfileScreen({route, navigation}){
                     })
                     
             });
-      }, []);
+            let tempWeightsArray = [];
+      let tempCardioArray = [];
+      var tempPosts = [];
+      await firebase.firestore()
+        .collection('posts')
+        .doc(userID)
+        .collection('posts').get()
+        .then((docs) => {
+          docs.forEach(doc => {
+            if (doc.data().post == null) {
+
+              tempCardioArray.push({
+                calories: doc.data().calories, wName: doc.data().cardio, date: doc.data().date.seconds, distance: doc.data().distance,
+                speed: doc.data().speed, time: doc.data().time, id: currentUser.uid
+              })
+            }
+            else {
+              tempWeightsArray.push({ weights: doc.data().post, id: currentUser.uid, date: doc.data().post[0].date.seconds })
+            }
+          })
+          setTWeights(tempWeightsArray)
+          setTCardio(tempCardioArray)
+          for (var i = 0; i < tempCardioArray.length; i++) {
+            if (tempPosts.includes(tempCardioArray[i]) === false) {
+
+              tempPosts.push(tempCardioArray[i])
+            }
+          }
+          for (var i = 0; i < tempWeightsArray.length; i++) {
+            if (tempPosts.includes(tempWeightsArray[i]) === false) {
+              tempPosts.push(tempWeightsArray[i])
+            }
+          }
+          tempPosts.sort((a, b) => b.date - a.date)
+          setPosts(tempPosts);
+        })
+
+        let tempRewardCount = 0;
+        let tempRewards = [];
+        await firebase.firestore()
+        .collection('rewards')
+        .doc(userID)
+        .collection('distance').get()
+        .then(docs=>{
+          docs.forEach(doc=>{
+            if(doc.data().two === true){
+              tempRewardCount++;
+              tempRewards.push({url: '../../assets/rewards/2km.png', description: 'You Have Travelled 2km!', id:'2km', priority: 16})
+              if(doc.data().five === true){
+                tempRewardCount++;
+                tempRewards.push({url: '../../assets/rewards/5km.png', description: 'You Have Travelled 5km!', id:'5km', priority: 14})
+                if(doc.data().ten === true){
+                  tempRewardCount++;
+                  tempRewards.push({url: '../../assets/rewards/10km.png', description: 'You Have Travelled 10km!', id:'10km', priority: 11})
+                  if(doc.data().fifteen === true){
+                    tempRewardCount++;
+                    tempRewards.push({url: '../../assets/rewards/15km.png', description: 'You Have Travelled 15km!', id:'15km', priority: 8})
+                    if(doc.data().twenty === true){
+                      tempRewardCount++;
+                      tempRewards.push({url: '../../assets/rewards/20km.png', description: 'You Have Travelled 20km!', id:'20km', priority: 5})
+                      if(doc.data().thirty === true){
+                        tempRewardCount++;
+                        tempRewards.push({url: '../../assets/rewards/30km.png', description: 'You Have Travelled 30km!', id:'30km', priority: 2})
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          })
+          firebase.firestore()
+            .collection('rewards')
+            .doc(userID)
+            .collection('weights').get()
+            .then(docs => {
+              docs.forEach(doc => {
+                if (doc.data().one === true) {
+                  tempRewardCount++;
+                  tempRewards.push({url: '../../assets/rewards/1ton.png', description: 'You Have Lifted 1ton!', id:'1ton', priority: 13})
+                  if (doc.data().two === true) {
+                    tempRewardCount++;
+                    tempRewards.push({url: '../../assets/rewards/2tons.png', description: 'You Have Lifted 2ton!', id:'2ton', priority: 10})
+                    if (doc.data().ten === true) {
+                      tempRewardCount++;
+                      tempRewards.push({url: '../../assets/rewards/10tons.png', description: 'You Have Lifted 10tons!', id:'10ton', priority: 7})
+                      if (doc.data().twenty === true) {
+                        tempRewardCount++;
+                        tempRewards.push({url: '../../assets/rewards/20tons.png', description: 'You Have Lifted 20tons!', id:'20ton', priority: 4})
+                        if (doc.data().fifty === true) {
+                          tempRewardCount++;
+                          tempRewards.push({url: '../../assets/rewards/50ton.png', description: 'You Have Lifted 50tons!', id:'50ton', priority: 1})
+                        }
+                      }
+                    }
+                  }
+                }
+              })
+              firebase.firestore()
+                .collection('rewards')
+                .doc(userID)
+                .collection('calories').get()
+                .then(docs => {
+                  docs.forEach(doc => {
+                    if (doc.data().half === true) {
+                      tempRewardCount++;
+                      tempRewards.push({url: '../../assets/rewards/500kcal.png', description: 'You Have Burned 500kcal!', id:'halfkcal', priority: 18})
+                      if (doc.data().one === true) {
+                        tempRewardCount++;
+                        tempRewards.push({url: '../../assets/rewards/1Kkcal.png', description: 'You Have Burned 1000kcal!', id:'1Kkcal', priority: 17})
+                        if (doc.data().two === true) {
+                          tempRewardCount++;
+                          tempRewards.push({url: '../../assets/rewards/2Kkcal.png', description: 'You Have Burned 2000kcal!', id:'2Kkcal', priority: 15})
+                          if (doc.data().threehalf === true) {
+                            tempRewardCount++;
+                            tempRewards.push({url: '../../assets/rewards/3halfKkcal.png', description: 'You Have Burned 3500kcal!', id:'3halfKkcal', priority: 12})
+                            if (doc.data().five === true) {
+                              tempRewardCount++;
+                              tempRewards.push({url: '../../assets/rewards/5Kkcal.png', description: 'You Have Burned 5000kcal!', id:'5Kkcal', priority: 9})
+                              if (doc.data().seven === true) {
+                                tempRewardCount++;
+                                tempRewards.push({url: '../../assets/rewards/7Kkcal.png', description: 'You Have Burned 7000kcal!', id:'7Kkcal', priority: 6})
+                                if (doc.data().ten === true) {
+                                  tempRewardCount++;
+                                  tempRewards.push({url: '../../assets/rewards/10Kkcal.png', description: 'You Have Burned 10000kcal!', id:'10Kkcal', priority: 3})
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  })
+                  tempRewards.sort((a, b) => a.priority - b.priority)
+                  setRewardCount(tempRewardCount)
+                  setRewards(tempRewards)
+                })
+            })
+          })
+          }
+          getDatabase().then(()=>setLoading(false))
+      }, [loading]);
+
+      const getDatabase = async () => {
+        await firebase.firestore()
+            .collection('users').get()
+            .then((docs) => {
+                    docs.forEach(doc => {
+                        if (doc.id == userID) {
+                            if(doc.data().inbox != null){
+                                setPendingArray(doc.data().inbox)
+                                if(doc.data().inbox.includes(currentUser.uid+userID)){
+                                    setPending(true)
+                                }else{setPending(false);}
+                                
+                            }
+                            if(doc.data().friends != null){
+                                setFriendArray(doc.data().friends)
+                                if(doc.data().friends.includes(currentUser.uid)){
+                                    setFriends(true)
+                                }else{setFriends(false)}
+                            }
+                        }else if(doc.id === currentUser.uid){
+                            if(doc.data().inbox !=null){
+                                if(doc.data().inbox.includes(userID+currentUser.uid)){
+                                    setRequested(true)
+                                }else{setRequested(false)}
+                            }
+                        }
+                        if(friendArray.includes(doc.id)){
+                            let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
+                            imageRef
+                            .then((url) => {
+                                tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
+                                setURL(url)
+                            })
+                            .catch((e) => console.log('getting downloadURL of image error => ', e));
+                        }
+                        setUsers(tempUserArray)
+                    })
+                    let tempWeightsArray = [];
+      let tempCardioArray = [];
+      var tempPosts = [];
+      firebase.firestore()
+        .collection('posts')
+        .doc(userID)
+        .collection('posts').get()
+        .then((docs) => {
+          docs.forEach(doc => {
+            if (doc.data().post == null) {
+
+              tempCardioArray.push({
+                calories: doc.data().calories, wName: doc.data().cardio, date: doc.data().date.seconds, distance: doc.data().distance,
+                speed: doc.data().speed, time: doc.data().time, id: currentUser.uid
+              })
+            }
+            else {
+              tempWeightsArray.push({ weights: doc.data().post, id: currentUser.uid, date: doc.data().post[0].date.seconds })
+            }
+          })
+          setTWeights(tempWeightsArray)
+          setTCardio(tempCardioArray)
+          for (var i = 0; i < tempCardioArray.length; i++) {
+            if (tempPosts.includes(tempCardioArray[i]) === false) {
+
+              tempPosts.push(tempCardioArray[i])
+            }
+          }
+          for (var i = 0; i < tempWeightsArray.length; i++) {
+            if (tempPosts.includes(tempWeightsArray[i]) === false) {
+              tempPosts.push(tempWeightsArray[i])
+            }
+          }
+          tempPosts.sort((a, b) => b.date - a.date)
+          setPosts(tempPosts);
+        })
+
+        let tempRewardCount = 0;
+        let tempRewards = [];
+        firebase.firestore()
+        .collection('rewards')
+        .doc(userID)
+        .collection('distance').get()
+        .then(docs=>{
+          docs.forEach(doc=>{
+            if(doc.data().two === true){
+              tempRewardCount++;
+              tempRewards.push({url: '../../assets/rewards/2km.png', description: 'You Have Travelled 2km!', id:'2km', priority: 16})
+              if(doc.data().five === true){
+                tempRewardCount++;
+                tempRewards.push({url: '../../assets/rewards/5km.png', description: 'You Have Travelled 5km!', id:'5km', priority: 14})
+                if(doc.data().ten === true){
+                  tempRewardCount++;
+                  tempRewards.push({url: '../../assets/rewards/10km.png', description: 'You Have Travelled 10km!', id:'10km', priority: 11})
+                  if(doc.data().fifteen === true){
+                    tempRewardCount++;
+                    tempRewards.push({url: '../../assets/rewards/15km.png', description: 'You Have Travelled 15km!', id:'15km', priority: 8})
+                    if(doc.data().twenty === true){
+                      tempRewardCount++;
+                      tempRewards.push({url: '../../assets/rewards/20km.png', description: 'You Have Travelled 20km!', id:'20km', priority: 5})
+                      if(doc.data().thirty === true){
+                        tempRewardCount++;
+                        tempRewards.push({url: '../../assets/rewards/30km.png', description: 'You Have Travelled 30km!', id:'30km', priority: 2})
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          })
+          firebase.firestore()
+            .collection('rewards')
+            .doc(userID)
+            .collection('weights').get()
+            .then(docs => {
+              docs.forEach(doc => {
+                if (doc.data().one === true) {
+                  tempRewardCount++;
+                  tempRewards.push({url: '../../assets/rewards/1ton.png', description: 'You Have Lifted 1ton!', id:'1ton', priority: 13})
+                  if (doc.data().two === true) {
+                    tempRewardCount++;
+                    tempRewards.push({url: '../../assets/rewards/2tons.png', description: 'You Have Lifted 2ton!', id:'2ton', priority: 10})
+                    if (doc.data().ten === true) {
+                      tempRewardCount++;
+                      tempRewards.push({url: '../../assets/rewards/10tons.png', description: 'You Have Lifted 10tons!', id:'10ton', priority: 7})
+                      if (doc.data().twenty === true) {
+                        tempRewardCount++;
+                        tempRewards.push({url: '../../assets/rewards/20tons.png', description: 'You Have Lifted 20tons!', id:'20ton', priority: 4})
+                        if (doc.data().fifty === true) {
+                          tempRewardCount++;
+                          tempRewards.push({url: '../../assets/rewards/50ton.png', description: 'You Have Lifted 50tons!', id:'50ton', priority: 1})
+                        }
+                      }
+                    }
+                  }
+                }
+              })
+              firebase.firestore()
+                .collection('rewards')
+                .doc(userID)
+                .collection('calories').get()
+                .then(docs => {
+                  docs.forEach(doc => {
+                    if (doc.data().half === true) {
+                      tempRewardCount++;
+                      tempRewards.push({url: '../../assets/rewards/500kcal.png', description: 'You Have Burned 500kcal!', id:'halfkcal', priority: 18})
+                      if (doc.data().one === true) {
+                        tempRewardCount++;
+                        tempRewards.push({url: '../../assets/rewards/1Kkcal.png', description: 'You Have Burned 1000kcal!', id:'1Kkcal', priority: 17})
+                        if (doc.data().two === true) {
+                          tempRewardCount++;
+                          tempRewards.push({url: '../../assets/rewards/2Kkcal.png', description: 'You Have Burned 2000kcal!', id:'2Kkcal', priority: 15})
+                          if (doc.data().threehalf === true) {
+                            tempRewardCount++;
+                            tempRewards.push({url: '../../assets/rewards/3halfKkcal.png', description: 'You Have Burned 3500kcal!', id:'3halfKkcal', priority: 12})
+                            if (doc.data().five === true) {
+                              tempRewardCount++;
+                              tempRewards.push({url: '../../assets/rewards/5Kkcal.png', description: 'You Have Burned 5000kcal!', id:'5Kkcal', priority: 9})
+                              if (doc.data().seven === true) {
+                                tempRewardCount++;
+                                tempRewards.push({url: '../../assets/rewards/7Kkcal.png', description: 'You Have Burned 7000kcal!', id:'7Kkcal', priority: 6})
+                                if (doc.data().ten === true) {
+                                  tempRewardCount++;
+                                  tempRewards.push({url: '../../assets/rewards/10Kkcal.png', description: 'You Have Burned 10000kcal!', id:'10Kkcal', priority: 3})
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  })
+                  tempRewards.sort((a, b) => a.priority - b.priority)
+                  setRewardCount(tempRewardCount)
+                  setRewards(tempRewards)
+                })
+            })
+          })
+                    
+            });
+          }
 
       function loadFriends(){
         setModalVisible(true);
@@ -536,11 +685,17 @@ export default function ProfileScreen({route, navigation}){
     }
 
     function navigatePages(givenID){
-        
-        if(givenID != currentUser.uid){
-            setModalVisible(false)
-            navigation.navigate('View Profile', { userID: givenID })
-        }else{}
+        // setFriendArray([])
+        // setRewardCount(0)
+        // setRewards([])
+        // setPostCount(0)
+        // setPosts([])
+        // setUserID(givenID)
+        // getDatabase();
+        // if(givenID != currentUser.uid){
+        //     setModalVisible(false)
+        //     navigation.navigate('View Profile', { userID: givenID })
+        // }else{}
     }
     
     
@@ -717,7 +872,33 @@ export default function ProfileScreen({route, navigation}){
     function loadRewards() {
         setIsRewardVisible(true)
     }
+    const [reportVisible, setReportVisible] = useState(false)
+    function sendReport(reason){
+      var reportArray = [];
+      setReportVisible(false)
+      firebase.firestore()
+      .collection("reports").get()
+      .then(docs=>{
+        docs.forEach(doc=>{
+          if(doc.id===userID){
+            reportArray = doc.data().reports
+          }
+        })
+        reportArray.push({reason: reason, from: currentUser.uid})
+        firebase.firestore()
+        .collection('reports')
+        .doc(userID)
+        .set({
+          reports: reportArray
+        })
+      
+      })
 
+    }
+    if (loading) {
+      //add splash
+      return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
+      } 
     return(
         <ScrollView style={styles.container}>
             <View style={styles.titleContainer}>
@@ -770,6 +951,9 @@ export default function ProfileScreen({route, navigation}){
                         :<TouchableOpacity style={styles.editButton} onPress={() => addFriend()}>
                             <Text style={styles.editText}>Send Friend Request</Text>
                         </TouchableOpacity>}
+              <TouchableOpacity style={styles.reportButton} onPress={() => setReportVisible(true)}>
+                <Text style={{fontSize:15, color: 'white'}}>Report Profile</Text>
+              </TouchableOpacity>
                 
             </View>
             <Modal
@@ -1145,6 +1329,43 @@ export default function ProfileScreen({route, navigation}){
             </ScrollView>
             </View>
           </Modal>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={reportVisible}
+            onRequestClose={() => {
+              setReportVisible(!reportVisible);
+            }}
+          >
+            <View style={styles.reportContainerView}>
+            <ScrollView style={styles.reportView}>
+            <Pressable
+                  style={styles.reportCaseButton}
+                  onPress={() => sendReport("Picture")}
+                >
+                <Text style={{fontSize:15, color:'black'}}>Offensive Profile Picture</Text>
+            </Pressable>
+            <Pressable
+                  style={styles.reportCaseButton}
+                  onPress={() => sendReport("Name")}
+                >
+                <Text style={{fontSize:15, color:'black'}}>Offensive Name or Bio</Text>
+            </Pressable>
+            <Pressable
+                  style={styles.reportCaseButton}
+                  onPress={() => sendReport("Messages")}
+                >
+                <Text style={{fontSize:15, color:'black'}}>Profile Sending Offensive Messages</Text>
+            </Pressable>
+            <Pressable
+                  style={[styles.button, styles.buttonCloseModal]}
+                  onPress={() => setReportVisible(!reportVisible)}
+                >
+                <Text style={{fontSize:15, color:'white'}}>Close</Text>
+            </Pressable>
+              </ScrollView>
+            </View>
+          </Modal>
         </ScrollView>
     );
 }
@@ -1224,6 +1445,18 @@ const styles = StyleSheet.create({
         padding: 8,
         borderRadius: 10,
         alignSelf: 'center',
+        marginBottom: 5,
+      },
+      reportButton: {
+        width: '95%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'red',
+        borderColor: 'black',
+        borderWidth: 1,
+        padding: 8,
+        borderRadius: 10,
+        alignSelf: 'center',
         marginBottom: 10,
       },
       editText: {
@@ -1261,6 +1494,37 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         width: 300,
         
+      },
+      reportContainerView: {
+        flex: 1,
+        marginTop: 'auto',
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      },
+      reportView: {
+        marginTop: '150%',
+        backgroundColor: "white",
+        borderRadius: 20,
+        width: '100%',
+        
+      },
+      reportCaseButton:{
+        backgroundColor: 'white',
+        height: 50,
+        width: '100%',
+        alignItems: 'center',
+        alignSelf: 'center',
+        justifyContent: 'center',
+        borderBottomWidth: 1,
+        borderColor: 'grey'
       },
       buttonCloseModal:{
         backgroundColor: 'red',

@@ -8,7 +8,7 @@ import 'firebase/compat/firestore';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { createStackNavigator } from '@react-navigation/stack';
 import { collection, doc, setDoc } from "firebase/firestore"; 
-
+import LottieView from 'lottie-react-native';
 
 
 
@@ -75,43 +75,44 @@ export default function MessageScreen({navigation}){
 
             }, []);
 
-            const isFocused = useIsFocused();
-            
-            useEffect(() => {
-                firebase.firestore()
-                    .collection('chatrooms')
-                    .get()
-                    .then((docs) => {
-                        let tempChatArray = [];
-                        let tempMessageArray = [];
-                        docs.forEach(doc => {
-                            if (doc.id.includes(currentUser.uid)) {
-                                tempChatArray.push(doc.id)
-                                firebase.firestore()
-                                    .collection('chatrooms')
-                                    .doc(doc.id)
-                                    .collection('chats')
-                                    .get()
-                                    .then((docs) => {
-                                        let tempString = "";
+    const [loading, setLoading] = useState(true)        
+    useEffect(() => {
+        const getDatabase = async () => {
+            await firebase.firestore()
+                .collection('chatrooms')
+                .get()
+                .then((docs) => {
+                    let tempChatArray = [];
+                    let tempMessageArray = [];
+                    docs.forEach(doc => {
+                        if (doc.id.includes(currentUser.uid)) {
+                            tempChatArray.push(doc.id)
+                            firebase.firestore()
+                                .collection('chatrooms')
+                                .doc(doc.id)
+                                .collection('chats')
+                                .get()
+                                .then((docs) => {
+                                    let tempString = "";
 
-                                        docs.forEach(doc => {
-                                            tempString = doc.data().message
-                                        })
-                                        if (tempString.length > 31) {
-                                            tempMessageArray.push(tempString.substring(0, 30) + "...")
+                                    docs.forEach(doc => {
+                                        tempString = doc.data().message
+                                    })
+                                    if (tempString.length > 31) {
+                                        tempMessageArray.push(tempString.substring(0, 30) + "...")
 
-                                        } else {
-                                            tempMessageArray.push(tempString)
-                                        }
-                                        setMessageArray(tempMessageArray);
-                                    });
-                            }
-                        })
-                        setChatArray(tempChatArray);
-                    });
-                    
-                    }, []);
+                                    } else {
+                                        tempMessageArray.push(tempString)
+                                    }
+                                    setMessageArray(tempMessageArray);
+                                });
+                        }
+                    })
+                    setChatArray(tempChatArray);
+                });
+        }
+        getDatabase().then(()=>setLoading(false))
+    }, [loading]);
 
                     
 
@@ -175,7 +176,10 @@ export default function MessageScreen({navigation}){
     function existingChat(title){
         navigation.navigate("Chat", {title: title})
     }
-    
+    if (loading) {
+        //add splash
+        return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
+        } 
   return (
       <View style={styles.container}>
           <View style={{ borderBottomColor: 'black', borderBottomWidth: 1, paddingBottom: 15, flexDirection: 'row', marginBottom: 10}}>

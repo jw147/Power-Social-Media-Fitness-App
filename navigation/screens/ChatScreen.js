@@ -3,6 +3,7 @@ import React, {useState, useEffect} from 'react';
 import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import LottieView from 'lottie-react-native';
 
 export default function ChatScreen({route, navigation}){
   const date = new Date();
@@ -31,35 +32,39 @@ export default function ChatScreen({route, navigation}){
       setMessageArray(tempMessageArray);
     });
 
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
-    setChatRoom("");
-    let tempTitle = chatRoom;
-    for(var i =0; i < userID.userID.length; i++){
-        tempTitle = tempTitle + userID.userID[i];
+    const getDatabase = async() =>{
+      setChatRoom("");
+      let tempTitle = chatRoom;
+      for(var i =0; i < userID.userID.length; i++){
+          tempTitle = tempTitle + userID.userID[i];
+      }
+      setChatRoom(tempTitle)
+      await firebase.firestore()
+          .collection('users').get()
+          .then((docs) => {
+                  docs.forEach(doc => {
+                      if(userID.userID.includes(doc.id)){
+                          let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
+                          imageRef
+                          .then((url) => {
+                              tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
+                              setURL(url)
+                          })
+                          .catch((e) => console.log('getting downloadURL of image error => ', e));
+                      }
+                      setUsers(tempUserArray)
+                  })
+                  
+          });
     }
-    setChatRoom(tempTitle)
-    firebase.firestore()
-        .collection('users').get()
-        .then((docs) => {
-                docs.forEach(doc => {
-                    if(userID.userID.includes(doc.id)){
-                        let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
-                        imageRef
-                        .then((url) => {
-                            tempUserArray.push({ displayName: doc.data().displayname, userName: doc.data().username, id: doc.id, url: url, bio: doc.data().bio })
-                            setURL(url)
-                        })
-                        .catch((e) => console.log('getting downloadURL of image error => ', e));
-                    }
-                    setUsers(tempUserArray)
-                })
-                
-        });
+    getDatabase().then(()=>setLoading(false))
     
         
 
     
-  }, []);
+  }, [loading]);
   function sendMessage(){
     
 
@@ -101,7 +106,10 @@ export default function ChatScreen({route, navigation}){
                 setChatIndex(tempChatIndex)
         });
   }
-
+  if (loading) {
+    //add splash
+    return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
+    } 
     return (
       <KeyboardAvoidingView style={styles.container} keyboardVerticalOffset = "50" behavior={Platform.OS === "ios" ? "padding" : "height"}>
 

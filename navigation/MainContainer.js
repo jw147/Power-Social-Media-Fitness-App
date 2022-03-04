@@ -22,6 +22,7 @@ import SetProfileScreen from './screens/SetProfile';
 import EditProfileScreen from './screens/EditProfileScreen';
 import ProgressScreen from './screens/ProgressScreen';
 import ViewProfileScreen from './screens/ViewProfileScreen';
+import DietScreen from './screens/DietScreen';
 
 
 const homeName = 'Home';
@@ -40,6 +41,7 @@ function HomeScreens() {
             <Stack.Screen options={{ headerShown: false}} name={"Home Screen"} component={HomeScreen}/>
             <Stack.Screen options={{headerTintColor: "white", headerStyle: {backgroundColor: '#00a1d0'}}} name="Exercise" component={ExerciseScreen}/>
             <Stack.Screen options={{headerTintColor: "white", headerStyle: {backgroundColor: '#00a1d0'}}} name="Progress" component={ProgressScreen}/>
+            <Stack.Screen options={{headerTintColor: "white", headerStyle: {backgroundColor: '#00a1d0'}}} name="Diet" component={DietScreen}/>
         </Stack.Navigator>
     )
 }
