@@ -109,7 +109,7 @@ export default function FeedScreen({navigation}){
     } 
     return(
         <ScrollView style={styles.container}>
-            { posts.length > 0 && posts.map((p, key) => (    p.weights === undefined ?
+            { posts.length > 0 ? posts.map((p, key) => (    p.weights === undefined ?
                 <View key={key} style={styles.exerciseContainer}>
                 {users.map(u => ( u.id === p.id &&
                 <View style={{flexDirection: 'row'}}>
@@ -121,7 +121,7 @@ export default function FeedScreen({navigation}){
                         />
                     </ImageBackground>
                     <View style={{ justifyContent: 'center', marginBottom: 5}}>
-                        <Text style={styles.displayNameText}>{u.displayName}'s {p.wName}</Text>
+                        <Text style={styles.displayNameText}>{u.displayName}'s{"\n"}{p.wName}</Text>
                         <Text style={styles.userNameText}>{u.userName}</Text>
                     </View>
                 </View>
@@ -161,7 +161,7 @@ export default function FeedScreen({navigation}){
                         />
                     </ImageBackground>
                     <View style={{ justifyContent: 'center', marginBottom: 5}}>
-                        <Text style={styles.displayNameText}>{u.displayName}'s {p.weights[0].workout}</Text>
+                        <Text style={styles.displayNameText}>{u.displayName}'s{"\n"}{p.weights[0].workout}</Text>
                         <Text style={styles.userNameText}>{u.userName}</Text>
                     </View>
                 </View>
@@ -211,7 +211,8 @@ export default function FeedScreen({navigation}){
                             <Text style={{marginLeft: 5}}>{p.weights[0].calories} kcal</Text>
                 </View>
             </View>
-            ))}
+            )):
+            <Text style={styles.noPostsText}>There are no posts to see! Add some friends and keep up with their activity here!</Text>}
         </ScrollView>
     );
 }
@@ -293,4 +294,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: 10,
       },
+      noPostsText: {
+          fontStyle: 'italic',
+          color: 'grey',
+          fontSize: 18,
+          textAlign: 'center',
+          marginTop: 20
+      }
 })

@@ -15,7 +15,7 @@ export default function ProgressScreen({ navigation }) {
     const db = firebase.firestore();
 
     function onLoad(){
-        if(value === ""){
+        if(value[0] === undefined){
             alert("Please Select a Workout from the Dropdown Menu")
         }else if(value.includes("Workout")){
             setWorkout(true)

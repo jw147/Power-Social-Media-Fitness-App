@@ -1122,7 +1122,7 @@ export default function ProfileScreen({route, navigation}){
                         />
                     </ImageBackground>
                     <View style={{ justifyContent: 'center', marginBottom: 5}}>
-                        <Text style={styles.displayNameText}>{displayName}'s {p.wName}</Text>
+                        <Text style={styles.displayNameText}>{displayName}'s{"\n"}{p.wName}</Text>
                         <Text style={styles.userNameText}>{userName}</Text>
                     </View>
                 </View>
@@ -1161,7 +1161,7 @@ export default function ProfileScreen({route, navigation}){
                         />
                     </ImageBackground>
                     <View style={{ justifyContent: 'center', marginBottom: 5}}>
-                        <Text style={styles.displayNameText}>{displayName}'s {p.weights[0].workout}</Text>
+                        <Text style={styles.displayNameText}>{displayName}'s{"\n"}{p.weights[0].workout}</Text>
                         <Text style={styles.userNameText}>{userName}</Text>
                     </View>
                 </View>

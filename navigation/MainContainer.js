@@ -78,6 +78,7 @@ export default function MainContainer({navigation}){
             )
         })
     })
+    const [refresh, setRefresh] = React.useState("");
     return(
         <NavigationContainer
         independent={true}>
@@ -108,11 +109,21 @@ export default function MainContainer({navigation}){
                     }
                 },
             })}>
-                <Tab.Screen name={homeName} component={HomeScreens}/>
-                <Tab.Screen name={searchName} component={SearchScreens}/>
-                <Tab.Screen name={feedName} component={FeedScreen}/>
-                <Tab.Screen name={leaderboardName} component={LeaderboardScreen}/>
-                <Tab.Screen name={profileName} component={ProfileScreens}/>
+                <Tab.Screen name={homeName} component={HomeScreens} options={{ unmountOnBlur: true }} listeners={({ navigation }) => ({
+                    blur: () => navigation.setParams({ screen: undefined }),
+                })} />
+                <Tab.Screen name={searchName} component={SearchScreens} options={{ unmountOnBlur: true }} listeners={({ navigation }) => ({
+                    blur: () => navigation.setParams({ screen: undefined }),
+                })} />
+                <Tab.Screen name={feedName} component={FeedScreen} options={{ unmountOnBlur: true }} listeners={({ navigation }) => ({
+                    blur: () => navigation.setParams({ screen: undefined }),
+                })} />
+                <Tab.Screen name={leaderboardName} component={LeaderboardScreen} options={{ unmountOnBlur: true }} listeners={({ navigation }) => ({
+                    blur: () => navigation.setParams({ screen: undefined }),
+                })} />
+                <Tab.Screen name={profileName} component={ProfileScreens} options={{ unmountOnBlur: true }} listeners={({ navigation }) => ({
+                    blur: () => navigation.setParams({ screen: undefined }),
+                })} />
             </Tab.Navigator>
 
         </NavigationContainer>

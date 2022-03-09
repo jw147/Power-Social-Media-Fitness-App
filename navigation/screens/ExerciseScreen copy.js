@@ -5,11 +5,16 @@ import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import DropDownPicker from 'react-native-dropdown-picker'
 import PropTypes from 'prop-types';
-import LottieView from 'lottie-react-native';
+import { collection, doc, getDoc } from "firebase/firestore";
+import MapView from 'react-native-maps';
+import Marker from 'react-native-maps';
+import * as Location from 'expo-location';
+import { setStatusBarNetworkActivityIndicatorVisible } from 'expo-status-bar';
 
 let tempSet = [];
+let tempSetWeight = [];
+let tempSetReps = [];
 let tempEx = [];
-let tempTitle = [];
 
 let cardioDBIndex = 1;
 let weightDBIndex = 1;
@@ -20,16 +25,11 @@ let previousCount = 1;
 var count = 0;
 var calories = 0;
 
-var tempSetWeight = [];
-var tempSetReps = [];
-var tempSetEx = [];
-var tempSetSets = [];
-var customWeightEx = [];
 export default function ExerciseScreen({ navigation }) {
   const date = new Date()
-  
+
   const [previousWeight, SetPreviousWeight] = useState("-");
-  
+
   const [PR, setPR] = useState(false);
 
   //-----------------------------------------------------Hide Views-----------------------------------------------------
@@ -194,7 +194,7 @@ export default function ExerciseScreen({ navigation }) {
     tempSetWeight = [];
     tempSetReps = [];
     count = 0;
-    //addWorkoutTitleDB()
+    addWorkoutTitleDB()
     setAddSet([]);
     setAddExercise([]);
     value.map(ex => {
@@ -219,7 +219,6 @@ export default function ExerciseScreen({ navigation }) {
     if(workoutTime === 0){
       Alert.alert("Please enter the duration of this workout")
     }else{
-      updateWorkoutData(weightsTitle)
       var cal = workoutCalories();
       var totalWeight = 0;
       var dbWeight = 0;
@@ -297,28 +296,7 @@ export default function ExerciseScreen({ navigation }) {
       }else{
         index = String(weightDBIndex);
       }
-      console.log("h")
-      firebase.firestore()
-      .collection('savedWorkouts').get()
-      .then(docs=>{
-        docs.forEach(doc=>{
-          if(doc.id===currentUser.uid){
-            tempTitle = doc.data().idArray
-          }
-        })
-        if(tempTitle.includes(weightsTitle)){
-
-        }else{
-          tempTitle.push(weightsTitle)
-          firebase.firestore()
-          .collection('savedWorkouts')
-          .doc(currentUser.uid)
-          .set({
-            idArray: tempTitle
-          })
-        }
-      })
-
+  
       firebase.firestore()
         .collection('savedWorkouts')
         .doc(currentUser.uid)
@@ -334,10 +312,6 @@ export default function ExerciseScreen({ navigation }) {
       setWeightsHidden(true);
       setValue([]);
       calories = 0;
-      tempSetEx = [];
-      tempSetReps = [];
-      tempSetWeight = [];
-      tempSetSets = [];
     }
   }
   function rewards(tW, tC, tD){
@@ -350,6 +324,7 @@ export default function ExerciseScreen({ navigation }) {
       .set({
         one: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tW >= 2000 && tW<10000){
       firebase.firestore()
@@ -361,6 +336,7 @@ export default function ExerciseScreen({ navigation }) {
         one: true,
         two: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tW >= 10000 && tW<20000){
       firebase.firestore()
@@ -373,6 +349,7 @@ export default function ExerciseScreen({ navigation }) {
         two: true,
         ten: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tW >= 20000 && tW<50000){
       firebase.firestore()
@@ -386,6 +363,7 @@ export default function ExerciseScreen({ navigation }) {
         ten: true,
         twenty: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tW >= 50000){
       firebase.firestore()
@@ -400,6 +378,7 @@ export default function ExerciseScreen({ navigation }) {
         twenty: true,
         fifty: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tC >= 500 && tC<1000){
       firebase.firestore()
@@ -410,6 +389,7 @@ export default function ExerciseScreen({ navigation }) {
       .set({
         half: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tC >= 1000 && tC<2000){
       firebase.firestore()
@@ -421,6 +401,7 @@ export default function ExerciseScreen({ navigation }) {
         half: true,
         one: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tC >= 2000 && tC<3500){
       firebase.firestore()
@@ -433,6 +414,7 @@ export default function ExerciseScreen({ navigation }) {
         one: true,
         two: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tC >= 3500 && tC<5000){
       firebase.firestore()
@@ -446,6 +428,7 @@ export default function ExerciseScreen({ navigation }) {
         two: true,
         threehalf: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tC >= 5000 && tC<7000){
       firebase.firestore()
@@ -460,6 +443,7 @@ export default function ExerciseScreen({ navigation }) {
         threehalf: true,
         five: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tC >= 7000 && tC<10000){
       firebase.firestore()
@@ -475,6 +459,7 @@ export default function ExerciseScreen({ navigation }) {
         five: true,
         seven: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tC >= 10000){
       firebase.firestore()
@@ -491,6 +476,7 @@ export default function ExerciseScreen({ navigation }) {
         seven: true,
         ten: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tD >= 2 && tD < 5){
       firebase.firestore()
@@ -501,6 +487,7 @@ export default function ExerciseScreen({ navigation }) {
       .set({
         two: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tD >= 5 && tD < 10){
       firebase.firestore()
@@ -512,6 +499,7 @@ export default function ExerciseScreen({ navigation }) {
         two: true,
         five: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tD >= 10 && tD < 15){
       firebase.firestore()
@@ -524,6 +512,7 @@ export default function ExerciseScreen({ navigation }) {
         five: true,
         ten: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tD >= 15 && tD < 20){
       firebase.firestore()
@@ -537,6 +526,7 @@ export default function ExerciseScreen({ navigation }) {
         ten: true,
         fifteen: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tD >= 20 && tD < 30){
       firebase.firestore()
@@ -551,6 +541,7 @@ export default function ExerciseScreen({ navigation }) {
         fifteen: true,
         twenty: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
     if(tD >= 30){
       firebase.firestore()
@@ -566,6 +557,7 @@ export default function ExerciseScreen({ navigation }) {
         twenty: true,
         thirty: true,
       })
+      Alert.alert("You earned a Reward! Check your profile to view your rewards")
     }
   }
 
@@ -637,9 +629,6 @@ export default function ExerciseScreen({ navigation }) {
     previousCount = 1;
     tempEx = [...addExercise]
     count++;
-    tempSetWeight.push(0)
-    tempSetReps.push(0)
-    tempSetEx.push(ex)
     firebase.firestore().collection('savedWorkouts')
     .doc(currentUser.uid)
     .collection(weightsTitle)
@@ -657,18 +646,12 @@ export default function ExerciseScreen({ navigation }) {
       setAddSet(tempSet)
       setModalVisible(false);
     });
-    customWeightEx[0] = "";
   }
   
 
   const addSetHandler = (ex)=>{
     previousCount++;
     count++;
-    // tempSetWeight.push({ex:ex, weights:[]})
-    // tempSetReps.push({ex:ex, reps:[]})
-    tempSetWeight.push(0)
-    tempSetReps.push(0)
-    tempSetEx.push(ex)
     firebase.firestore().collection('savedWorkouts')
     .doc(currentUser.uid)
     .collection(weightsTitle)
@@ -723,11 +706,6 @@ export default function ExerciseScreen({ navigation }) {
       .then(() => {
         console.log('Workout Info Deleted');
       })
-  }
-
-  
-  function updateCustomWeight(text){
-    customWeightEx[0] = text
   }
 
   const exBack = (
@@ -800,46 +778,47 @@ export default function ExerciseScreen({ navigation }) {
     <View style={{borderBottomWidth: 1, borderColor: 'black', padding: 15}}><Text style={{fontSize: 20, fontWeight: 'bold'}}>Abs Exercises</Text></View>
   )
 
-  const updateWeight = (text, wSet, wName, exName, exSets, exReps, key) => {
+
+  const updateWeight = (text, wSet, wName, exName, exSets, exReps) => {
     tempSetWeight[wSet] = text
-    tempSetSets[wSet] = exSets
+    updateWorkoutData(wName, exName, exSets, tempSetWeight[wSet], exReps)
   }
 
-  const updateReps = (text, wSet, wName, exName, exSets, exWeight, key) => {
-    
+  const updateReps = (text, wSet, wName, exName, exSets, exWeight) => {
     tempSetReps[wSet] = text
-    tempSetSets[wSet] = exSets
+    updateWorkoutData(wName, exName, exSets, exWeight, tempSetReps[wSet])
   }
 
-  const updateWorkoutData = (wName) => {
-    
+  const updateWorkoutData = (wName, exName, exSets, exWeight, exReps) => {
+    if(exWeight == null){
+      exWeight = "0";
+    }
+    if(exReps == null){
+      exReps = "0";
+    }
+    if(exName === "Deadlift" || exName === "Barbell Bench Press" || exName === "Barbell Squat"){
+      if(exReps === "1"){
+        
+        weightPR(exName, exWeight);
+      }
+    }
     let index = "";
     if(weightDBIndex < 10){
       index = " "+ String(weightDBIndex);
     }else{
       index = String(weightDBIndex);
-    } 
-    for(var i = 0; i<tempSetEx.length; i++)
-    {
-      if(tempSetEx[i] === "Deadlift" || tempSetEx[i] === "Barbell Bench Press" || tempSetEx[i] === "Barbell Squat"){
-        if(tempSetReps[i] === "1"){
-          
-          weightPR(tempSetEx[i], tempSetWeight[i]);
-        }
-      }
-      firebase.firestore()
+    }
+    firebase.firestore()
       .collection('savedWorkouts')
       .doc(currentUser.uid)
       .collection(wName)
       .doc(index)
-      .collection(tempSetEx[i])
-      .doc(String(tempSetSets[i]))
+      .collection(exName)
+      .doc(exSets)
       .set({
-        Reps: tempSetReps[i],
-        Weight: tempSetWeight[i]
-      })
-    }
-
+        Reps: exReps,
+        Weight: exWeight
+      })    
 }
 
 function weightPR(exName, exWeight){
@@ -927,28 +906,28 @@ function postWeights(cal){
     })
 }
 
-  // var dbArray = []
+  var dbArray = []
 
-  // function getDBArray(documentSnapshot) {
-  //   return documentSnapshot.get('idArray');
-  // }
+  function getDBArray(documentSnapshot) {
+    return documentSnapshot.get('idArray');
+  }
 
-  // function addWorkoutTitleDB() {
-  //   firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).get()
-  //     .then(
-  //       documentSnapshot => getDBArray(documentSnapshot))
-  //     .then(idArray => {
-  //       for (var i = 0; i < idArray.length; i++) {
-  //         dbArray.push(idArray[i])
-  //       }
-  //       if (dbArray.includes(weightsTitle) === false) {
-  //         dbArray.push(weightsTitle)
-  //         firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).set({
-  //           idArray: dbArray
-  //         })
-  //       }
-  //     });
-  // }
+  function addWorkoutTitleDB() {
+    firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).get()
+      .then(
+        documentSnapshot => getDBArray(documentSnapshot))
+      .then(idArray => {
+        for (var i = 0; i < idArray.length; i++) {
+          dbArray.push(idArray[i])
+        }
+        if (dbArray.includes(weightsTitle) === false) {
+          dbArray.push(weightsTitle)
+          firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).set({
+            idArray: dbArray
+          })
+        }
+      });
+  }
 
 
 //-----------------------------------------------------Calorie Functions-----------------------------------------------------
@@ -1339,26 +1318,20 @@ function finishWalking(){
         Calories: cal
       })
 
-      firebase.firestore()
-      .collection('savedWorkouts').get()
-      .then(docs=>{
-        docs.forEach(doc=>{
-          if(doc.id===currentUser.uid){
-            tempTitle = doc.data().idArray
-          }
-        })
-        if(tempTitle.includes(wName)){
-
-        }else{
-          tempTitle.push(wName)
-          firebase.firestore()
-          .collection('savedWorkouts')
-          .doc(currentUser.uid)
-          .set({
-            idArray: tempTitle
+      firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).get()
+      .then(
+        documentSnapshot => getDBArray(documentSnapshot))
+      .then(idArray => {
+        for (var i = 0; i < idArray.length; i++) {
+          dbArray.push(idArray[i])
+        }
+        if (dbArray.includes(wName) === false) {
+          dbArray.push(wName)
+          firebase.firestore().collection('savedWorkouts').doc(currentUser.uid).set({
+            idArray: dbArray
           })
         }
-      })
+      });
 }
 let testPR = false;
 function cardioPR(wName, distance, time, cal, speed){
@@ -1484,58 +1457,61 @@ function postCardio(cName, dis, time, cal){
     
   }
 
+
+  
+
   return (
     <View style={styles.container}>
       <HideView hide={selectHidden}>
-      <Text style={styles.title}>
-        Welcome back, {displayName.split(" ")[0]}!
-      </Text>
-      <View style={{flexDirection: 'row'}}>
-      <Text style={styles.headerStrength}>
-        New Strength Workout
-      </Text>
-      <Image source={require('../../assets/weights.png')} style={{height:30, width:30, marginTop: 'auto', marginLeft: 'auto', marginRight: 5}}></Image>
-      </View>
-      <DropDownPicker
-        multiple={true}
-        min={0}
-        max={7}
-        open={open}
-        value={value}
-        items={items}
-        setOpen={setOpen}
-        setValue={setValue}
-        setItems={setItems}
-        placeholder='Select a Muscle Group'
-      />
-      <Pressable style={styles.beginButton}
-        onPress={selectToWeights}>
-        <Text style={{ color: 'white' }}>Begin</Text>
-      </Pressable>
-      <View style={{flexDirection: 'row'}}>
-      <Text style={styles.headerCardio}>
-        New Cardio Workout
-      </Text>
-      <Image source={require('../../assets/cardio.png')} style={{height:30, width:30, marginTop: 'auto', marginLeft: 'auto', marginRight: 5}}></Image>
-      </View>
-      <DropDownPicker
-      multiple={false}
-      min={0}
-      max={1}
-      open={openC}
-      value={valueCardio}
-      items={itemsCardio}
-      setOpen={setOpenC}
-      setValue={setValueCardio}
-      setItems={setItemsCardio}
-      placeholder='Select a Cardio Exercise'
-    />
-      <Pressable style={styles.beginButton}
-        onPress={selectToCardio}>
-        <Text style={{ color: 'white' }}>Begin</Text>
+        <Text style={styles.title}>
+          Welcome back, {displayName.split(" ")[0]}!
+        </Text>
+        <View style={{flexDirection: 'row'}}>
+        <Text style={styles.headerStrength}>
+          New Strength Workout
+        </Text>
+        <Image source={require('../../assets/weights.png')} style={{height:30, width:30, marginTop: 'auto', marginLeft: 'auto', marginRight: 5}}></Image>
+        </View>
+        <DropDownPicker
+          multiple={true}
+          min={0}
+          max={7}
+          open={open}
+          value={value}
+          items={items}
+          setOpen={setOpen}
+          setValue={setValue}
+          setItems={setItems}
+          placeholder='Select a Muscle Group'
+        />
+        <Pressable style={styles.beginButton}
+          onPress={selectToWeights}>
+          <Text style={{ color: 'white' }}>Begin</Text>
         </Pressable>
-    </HideView>
-      
+        <View style={{flexDirection: 'row'}}>
+        <Text style={styles.headerCardio}>
+          New Cardio Workout
+        </Text>
+        <Image source={require('../../assets/cardio.png')} style={{height:30, width:30, marginTop: 'auto', marginLeft: 'auto', marginRight: 5}}></Image>
+        </View>
+        <DropDownPicker
+        multiple={false}
+        min={0}
+        max={1}
+        open={openC}
+        value={valueCardio}
+        items={itemsCardio}
+        setOpen={setOpenC}
+        setValue={setValueCardio}
+        setItems={setItemsCardio}
+        placeholder='Select a Cardio Exercise'
+      />
+        <Pressable style={styles.beginButton}
+          onPress={selectToCardio}>
+          <Text style={{ color: 'white' }}>Begin</Text>
+          </Pressable>
+      </HideView>
+
       <HideView hide={weightsHidden}>
           <Text style={styles.title}>{weightsTitle}</Text>  
         <ScrollView style={{height: '94%'}} keyboardShouldPersistTaps='handled'>
@@ -1559,12 +1535,17 @@ function postCardio(cName, dis, time, cal){
                   <View style={styles.inputContainerSet}>
                     <Text style={styles.setInput}>{_key_ + 1}</Text>
                     <TextInput style={styles.previousInput} keyboardType='number-pad' value={_input.previous != null ?_input.previous + ' kg' : "-"} />
-                    <TextInput style={styles.weightInput} keyboardType='number-pad' returnKeyType={'done'} value={tempSetWeight[_input.set - 1]} onChangeText={(text) => updateWeight(text, _input.set -1, weightsTitle, input.name, String(_key_ + 1), tempSetReps[_input.set - 1], _key_)} 
-                    />
-                    <TextInput style={styles.repsInput} keyboardType='number-pad' returnKeyType={'done'} value={tempSetReps[_input.set - 1]} onChangeText={(text) => updateReps(text, _input.set -1, weightsTitle, input.name, String(_key_ + 1), tempSetWeight[_input.set - 1], _key_)}
-                    />
+                    <TextInput style={styles.weightInput} placeholder={_key_ != 0 ? tempSetWeight[_input.set - 2]: ""} keyboardType='number-pad' returnKeyType={'done'} value={tempSetWeight[_input.set - 1]} onChangeText={(text) => updateWeight(text, _input.set -1, weightsTitle, input.name, String(_key_ + 1), tempSetReps[_input.set - 1])} 
+                    onBlur={() => updateWorkoutData(weightsTitle, input.name, String(_key_ + 1), tempSetWeight[_input.set - 1], tempSetReps[_input.set - 1]) } />
+                    <TextInput style={styles.repsInput} placeholder={_key_ != 0 ? tempSetReps[_input.set - 2]: ""} keyboardType='number-pad' returnKeyType={'done'} value={tempSetReps[_input.set - 1]} onChangeText={(text) => updateReps(text, _input.set -1, weightsTitle, input.name, String(_key_ + 1), tempSetWeight[_input.set - 1])}
+                    onBlur={() => updateWorkoutData(weightsTitle, input.name, String(_key_ + 1), tempSetWeight[_input.set - 1], tempSetReps[_input.set - 1]) } />
                     
-                    
+                    <TouchableOpacity style={styles.deleteSet} onPress={() => deleteSetHandler(_key_, tempSetWeight[_input.set - 1], _input.set, input.name)}>
+                      <Image
+                        style={styles.deleteSetButton}
+                        source={require('../../assets/minus.png')}
+                      />
+                    </TouchableOpacity>
                   </View>
                 )
               ))}
@@ -1585,11 +1566,6 @@ function postCardio(cName, dis, time, cal){
           >
             <View style={styles.exerciseContainerView}>
               <ScrollView style={styles.exerciseView}>
-                <Text style={{textAlign: 'center', fontSize: 16, marginTop: 10}}>Enter Your Own Exercise</Text>
-                <TextInput style={styles.enterYourOwnWeightsInput} placeholder="Enter Your Own Exercise" value={customWeightEx[0]} onChangeText={text=> updateCustomWeight(text)}></TextInput>
-                <Pressable style={styles.enterYourOwnWeightsButton} onPress={()=> addExerciseHandler(customWeightEx[0])}>
-                  <Text style={{textAlign: 'center', color: 'white'}}>Add</Text>
-                </Pressable>
                 {value.indexOf("Back ") > -1 && titleBack}
                 {value.indexOf("Back ") > -1 && exBack}
                 {value.indexOf("Biceps ") > -1 && titleBiceps}
@@ -1780,9 +1756,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   setInput: {
+    borderWidth: 1,
+    borderColor: 'black',
     paddingLeft: 11,
     paddingTop: 5,
     borderRadius: 5,
+    marginLeft: 10,
     width: 35,
     height: 30,
     
@@ -1852,7 +1831,7 @@ const styles = StyleSheet.create({
   setTitle: {
     fontWeight: 'bold',
     width: 35,
-    marginLeft: -5,
+    marginLeft: -35,
     fontSize: 16
   },
   previousTitle: {
@@ -1965,27 +1944,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignSelf: 'center',
     marginTop: 10,
-    textAlign: 'center',
-  },
-  enterYourOwnWeightsInput: {
-    width: '80%',
-    height: 40,
-    borderWidth: 1,
-    alignSelf: 'center',
-    borderColor: 'black',
-    marginTop: 10,
-    textAlign: 'center',
-    borderRadius: 15
-  },
-  enterYourOwnWeightsButton:{
-    marginLeft: 'auto',
-    height: 40,
-    width: 120,
-    backgroundColor: '#00a1d0',
-    marginRight: 10,
-    borderRadius: 15,
-    marginTop: 5,
-    justifyContent: 'center'
+    textAlign: 'center'
   }
 });
 

@@ -245,7 +245,6 @@ export default function DietScreen({navigation}){
 
     function addSnack(){
         setSnackVisible(true)
-        console.log("here")
     }
 
     function addSnackIngredient(){
