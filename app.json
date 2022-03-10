@@ -34,7 +34,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#00a1d0"
       },
-      "package": "com.joshuawan.strength-in-numbers",
+      "package": "Strength.In.Numbers",
       "versionCode": 1
     },
     "web": {
