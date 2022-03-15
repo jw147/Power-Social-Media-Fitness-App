@@ -4,6 +4,9 @@ import { NavigationContainer, StackActions, TabActions } from '@react-navigation
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { auth } from '../firebase'
+import {getDatabase, ref, onValue, set} from 'firebase/database';
+import { initializeApp } from 'firebase/app';
 
 
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -23,6 +26,7 @@ import EditProfileScreen from './screens/EditProfileScreen';
 import ProgressScreen from './screens/ProgressScreen';
 import ViewProfileScreen from './screens/ViewProfileScreen';
 import DietScreen from './screens/DietScreen';
+import LoginScreen from './screens/LoginScreen';
 
 
 const homeName = 'Home';
@@ -68,6 +72,19 @@ function ProfileScreens() {
 }
 
 export default function MainContainer({navigation}){
+
+    React.useEffect( () => {
+        //await setPersistence(a, browserLocalPersistence);
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (!user) {
+                navigation.replace("Login")
+            }
+        })
+
+        
+
+        return unsubscribe
+    }, [])
 
     React.useLayoutEffect(() => {
         navigation.setOptions({

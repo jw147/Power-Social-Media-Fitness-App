@@ -148,6 +148,26 @@ export default function ProfileScreen({navigation}){
     const [loading, setLoading] = useState(true) 
     useEffect(() => {
       const getDatabase = async () => {
+        var count = 0;
+        await firebase.firestore()
+          .collection("dataCollection")
+          .doc(currentUser.uid)
+          .collection("counters").get()
+          .then(docs => {
+            docs.forEach(doc => {
+              if (doc.id === "ownProfile") {
+                count = doc.data().count;
+              }
+            })
+            firebase.firestore()
+              .collection("dataCollection")
+              .doc(currentUser.uid)
+              .collection("counters")
+              .doc("ownProfile")
+              .set({
+                count: count + 0.5
+              })
+          })
         await firebase.firestore()
             .collection('users').get()
             .then((docs) => {
@@ -294,7 +314,9 @@ export default function ProfileScreen({navigation}){
               })
             }
             else {
-              tempWeightsArray.push({ weights: doc.data().post, id: currentUser.uid, date: doc.data().post[0].date.seconds })
+              if(doc.data().post[0] != undefined){
+                tempWeightsArray.push({ weights: doc.data().post, id: currentUser.uid, date: doc.data().post[0].date.seconds })
+              }
             }
           })
           setTWeights(tempWeightsArray)
@@ -759,6 +781,8 @@ export default function ProfileScreen({navigation}){
             </View>
           </View>
         }
+        {benchDate == "" && deadliftDate == "" && squatDate == "" && speedCycleDate == "" && speedRunDate == "" && speedWalkDate == "" && distanceCycleDate == "" && distanceRunDate == "" && distanceWalkDate == "" ?
+        <Text style={styles.noPostsText}>You have recorded no personal bests yet. Log some exercises to add personal bests here!</Text>:<Text></Text>}
       </View>
         :
         <View>
@@ -770,7 +794,7 @@ export default function ProfileScreen({navigation}){
             <Text style={{ fontWeight: 'bold', fontSize: 17, alignSelf: 'center' }}>Posted Workouts</Text>
           </Pressable>
         </View>
-        { posts.length > 0 && posts.map((p, key) => (    p.weights === undefined ?
+        { posts.length > 0 ? posts.map((p, key) => (    p.weights === undefined ?
                 <View key={key} style={styles.exerciseContainer}>
                 <View style={{flexDirection: 'row'}}>
                     <ImageBackground style={styles.profilePicDefaultPost}
@@ -869,7 +893,7 @@ export default function ProfileScreen({navigation}){
                             <Text style={{marginLeft: 5}}>{p.weights[0].calories} kcal</Text>
                 </View>
             </View>
-            ))}
+            )):<Text style={styles.noPostsText}>You do not currently have any posts. Log some exercises and post them to see them here!</Text>}
 
         </View>
       }
@@ -1282,4 +1306,12 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         marginLeft: 0,
       },
+      noPostsText: {
+        fontStyle: 'italic',
+        color: 'grey',
+        fontSize: 18,
+        textAlign: 'center',
+        marginTop: 20,
+        padding: 20
+    }
 })

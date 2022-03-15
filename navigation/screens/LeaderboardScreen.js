@@ -6,6 +6,7 @@ import 'firebase/compat/firestore';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getDatabase, set } from 'firebase/database';
 import LottieView from 'lottie-react-native';
+import { doc } from 'firebase/firestore';
 
 export default function LeaderboardScreen({navigation}){
     const currentUser = firebase.auth().currentUser;
@@ -13,6 +14,7 @@ export default function LeaderboardScreen({navigation}){
     const [url, setURL] = useState("");
     
     const [isWeights, setIsWeights] = useState(true)
+    const [notPressed, setNotPressed] = useState(true)
     const [loading, setLoading] = useState(true)
 
     const [benchPR, setBenchPR] = useState([])
@@ -71,7 +73,8 @@ export default function LeaderboardScreen({navigation}){
             await firebase.firestore()
                 .collection('users').get()
                 .then((docs) => {
-                    docs.forEach(doc => {
+                    docs.forEach(async(doc) => {
+                        
                             let imageRef = getDownloadURL(ref(getStorage(), "images/" + doc.id));
                             imageRef
                                 .then((url) => {
@@ -81,6 +84,7 @@ export default function LeaderboardScreen({navigation}){
                                 })
                                 .catch((e) => console.log('getting downloadURL of image error => ', e));
                             var id = doc.id
+                            var dName = doc.data().displayname
                             firebase.firestore()
                             .collection('personalRecords')
                             .doc(id)
@@ -91,6 +95,7 @@ export default function LeaderboardScreen({navigation}){
                                     tB.push({weight:doc.data().weight, id: id})
                                 })
                                 tempBench.sort((a, b) => b.weight - a.weight)
+                                console.log(tempBench)
                                 tB.sort((a, b) => b.weight - a.weight)
                                 setBenchPR(tempBench)
                                     var secondWeight = tB[1].weight
@@ -206,10 +211,6 @@ export default function LeaderboardScreen({navigation}){
                                     tFsC.unshift({speed: secondSpeed, id: secondID2})
                                 
                                 setFastestCyclePlacements(tFsC)
-                                console.log("farthest cycle placements:")
-                                console.log(tFrC)
-                                console.log("farthest cycle Leaderboard: ")
-                                console.log(tempFarthestCycle)
                             })
                             firebase.firestore()
                             .collection('personalRecords')
@@ -270,7 +271,7 @@ export default function LeaderboardScreen({navigation}){
                             .collection('weightCounters').get()
                             .then(docs =>{
                                 docs.forEach(doc=>{
-                                    tempWeight.push({ total: doc.data().total, id: id })
+                                    tempWeight.push({ total: doc.data().total, id: id, name: dName })
                                     tW.push({ total: doc.data().total, id: id })                             
                                 })
                                 tempWeight.sort((a, b) => b.total - a.total)
@@ -302,12 +303,44 @@ export default function LeaderboardScreen({navigation}){
                             
                             setCardioPlacements(tCar)
                             })
+                            
                             })
                         })
+
+                    
                     }
                     getDatabase().then(()=>setLoading(false))
                     
                 }, [loading]);
+
+        async function selectLeaderboard(type){
+            var count = 0;
+                await firebase.firestore()
+                    .collection("dataCollection")
+                    .doc(currentUser.uid)
+                    .collection("counters").get()
+                    .then(docs=>{
+                        docs.forEach(doc=>{
+                            if(doc.id === "leaderboard"){
+                                count = doc.data().count;
+                            }
+                        })
+                    firebase.firestore()
+                    .collection("dataCollection")
+                    .doc(currentUser.uid)
+                    .collection("counters")
+                    .doc("leaderboard")
+                    .set({
+                        count: count + 1
+                    })
+                })
+        setNotPressed(false)
+        if(type === "cardio"){
+            setIsWeights(false)
+        }else{
+            setIsWeights(true)
+        }
+    }
     if (loading) {
         //add splash
         return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
@@ -315,7 +348,20 @@ export default function LeaderboardScreen({navigation}){
 
     return(
         <ScrollView style={styles.container}>
-            {isWeights === true ?
+            {notPressed === true?
+            <View>
+                
+            <View style={{flexDirection:'row'}}>
+            <Pressable style={styles.weightsNotButton} onPress={()=> selectLeaderboard("weights")}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Weights Leaderboard</Text>
+            </Pressable>
+            <Pressable style={styles.cardioNotButton} onPress={()=> selectLeaderboard("cardio")}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Cardio Leaderboard</Text>
+            </Pressable>
+            </View>
+                <Text style={styles.SelectText}>Please Select One of the Above Leaderboards</Text>
+            </View>
+            :isWeights === true ?
             <View>
                 <View style={{flexDirection:'row'}}>
                 <Pressable style={styles.weightsButton}>
@@ -387,13 +433,11 @@ export default function LeaderboardScreen({navigation}){
                     <Image source={require('./../../assets/third.png')} style={{ height: 60, width: 60, marginTop: 'auto' }}></Image>
                 </View>
                 {weight.map((de, key) =>(
-                    users.map(u=>( u.id === de.id &&
                     <View style={{height:50, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#00a1d0', width: '90%', alignSelf:'center', flexDirection: 'row'}}>
                         <Text style={{fontSize: 15, alignSelf: 'center', marginLeft: 10}}>{key + 1}</Text>
-                        <Text style={{fontSize: 15, alignSelf: 'center', marginLeft: 10}}>{u.displayName}</Text>
+                        <Text style={{fontSize: 15, alignSelf: 'center', marginLeft: 10}}>{de.name}</Text>
                         <Text style={{fontSize: 15, alignSelf: 'center', marginLeft: 'auto', marginRight: 10}}>{de.total}KG</Text>
                     </View>
-                    ))
                 ))
 
                 }
@@ -1299,4 +1343,10 @@ const styles = StyleSheet.create({
         marginLeft: 0,
         marginTop:0
       },
+      SelectText:{
+          fontSize: 18,
+          color: 'grey',
+          textAlign: 'center',
+          padding: 20
+      }
 })

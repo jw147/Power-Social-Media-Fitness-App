@@ -29,6 +29,27 @@ export default function SearchScreen({navigation}){
     useEffect(() => {
         const getDatabase = async () => {
             
+            var count = 0;
+            await firebase.firestore()
+              .collection("dataCollection")
+              .doc(currentUser.uid)
+              .collection("counters").get()
+              .then(docs => {
+                docs.forEach(doc => {
+                  if (doc.id === "search") {
+                    count = doc.data().count;
+                  }
+                })
+                firebase.firestore()
+                  .collection("dataCollection")
+                  .doc(currentUser.uid)
+                  .collection("counters")
+                  .doc("search")
+                  .set({
+                    count: count + 0.5
+                  })
+              })
+
         await firebase.firestore()
             .collection('users').get()
             .then((docs) => {

@@ -217,7 +217,7 @@ export default function ExerciseScreen({ navigation }) {
 
   function finishWorkout(){
     if(workoutTime === 0){
-      Alert.alert("Please enter the duration of this workout")
+      alert("Please enter the duration of this workout")
     }else{
       updateWorkoutData(weightsTitle)
       var cal = workoutCalories();

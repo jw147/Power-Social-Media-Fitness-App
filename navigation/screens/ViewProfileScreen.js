@@ -298,7 +298,28 @@ export default function ProfileScreen({route, navigation}){
     const [loading, setLoading] = useState(true) 
     useEffect(() => {
       const getDatabase = async () => {
-        firebase.firestore()
+
+        var count = 0;
+        await firebase.firestore()
+          .collection("dataCollection")
+          .doc(currentUser.uid)
+          .collection("counters").get()
+          .then(docs => {
+            docs.forEach(doc => {
+              if (doc.id === "viewProfile") {
+                count = doc.data().count;
+              }
+            })
+            firebase.firestore()
+              .collection("dataCollection")
+              .doc(currentUser.uid)
+              .collection("counters")
+              .doc("viewProfile")
+              .set({
+                count: count + 0.5
+              })
+          })
+        await firebase.firestore()
             .collection('users').get()
             .then((docs) => {
                     docs.forEach(doc => {
@@ -349,11 +370,13 @@ export default function ProfileScreen({route, navigation}){
 
               tempCardioArray.push({
                 calories: doc.data().calories, wName: doc.data().cardio, date: doc.data().date.seconds, distance: doc.data().distance,
-                speed: doc.data().speed, time: doc.data().time, id: currentUser.uid
+                speed: doc.data().speed, time: doc.data().time, id: userID
               })
             }
             else {
-              tempWeightsArray.push({ weights: doc.data().post, id: currentUser.uid, date: doc.data().post[0].date.seconds })
+              if(doc.data().post[0] != undefined){
+                tempWeightsArray.push({ weights: doc.data().post, id: userID, date: doc.data().post[0].date.seconds })
+              }
             }
           })
           setTWeights(tempWeightsArray)
@@ -528,11 +551,11 @@ export default function ProfileScreen({route, navigation}){
 
               tempCardioArray.push({
                 calories: doc.data().calories, wName: doc.data().cardio, date: doc.data().date.seconds, distance: doc.data().distance,
-                speed: doc.data().speed, time: doc.data().time, id: currentUser.uid
+                speed: doc.data().speed, time: doc.data().time, id: userID
               })
             }
             else {
-              tempWeightsArray.push({ weights: doc.data().post, id: currentUser.uid, date: doc.data().post[0].date.seconds })
+              tempWeightsArray.push({ weights: doc.data().post, id: userID, date: doc.data().post[0].date.seconds })
             }
           })
           setTWeights(tempWeightsArray)
@@ -1100,6 +1123,8 @@ export default function ProfileScreen({route, navigation}){
             </View>
           </View>
         }
+        {benchDate == "" && deadliftDate == "" && squatDate == "" && speedCycleDate == "" && speedRunDate == "" && speedWalkDate == "" && distanceCycleDate == "" && distanceRunDate == "" && distanceWalkDate == "" ?
+        <Text style={styles.noPostsText}>{displayName} has recorded no personal bests yet</Text>:<Text></Text>}
       </View>
         :
         <View>
@@ -1111,7 +1136,7 @@ export default function ProfileScreen({route, navigation}){
             <Text style={{ fontWeight: 'bold', fontSize: 17, alignSelf: 'center' }}>Posted Workouts</Text>
           </Pressable>
         </View>
-        { posts.length > 0 && posts.map((p, key) => (    p.weights === undefined ?
+        { posts.length > 0 ? posts.map((p, key) => (    p.weights === undefined ?
                 <View key={key} style={styles.exerciseContainer}>
                 <View style={{flexDirection: 'row'}}>
                     <ImageBackground style={styles.profilePicDefaultPost}
@@ -1210,7 +1235,7 @@ export default function ProfileScreen({route, navigation}){
                             <Text style={{marginLeft: 5}}>{p.weights[0].calories} kcal</Text>
                 </View>
             </View>
-            ))}
+            )):<Text style={styles.noPostsText}>{displayName} does not currently have any posts</Text>}
 
         </View>
       
@@ -1705,4 +1730,12 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         marginLeft: 0,
       },
+      noPostsText: {
+          fontStyle: 'italic',
+          color: 'grey',
+          fontSize: 18,
+          textAlign: 'center',
+          marginTop: 20,
+          padding: 20
+      }
 })

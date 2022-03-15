@@ -78,6 +78,26 @@ export default function MessageScreen({navigation}){
     const [loading, setLoading] = useState(true)        
     useEffect(() => {
         const getDatabase = async () => {
+            var count = 0;
+            await firebase.firestore()
+              .collection("dataCollection")
+              .doc(currentUser.uid)
+              .collection("counters").get()
+              .then(docs => {
+                docs.forEach(doc => {
+                  if (doc.id === "messages") {
+                    count = doc.data().count;
+                  }
+                })
+                firebase.firestore()
+                  .collection("dataCollection")
+                  .doc(currentUser.uid)
+                  .collection("counters")
+                  .doc("messages")
+                  .set({
+                    count: count + 0.5
+                  })
+              })
             await firebase.firestore()
                 .collection('chatrooms')
                 .get()

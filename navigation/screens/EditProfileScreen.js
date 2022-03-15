@@ -1,11 +1,13 @@
 import React, {useEffect, useState} from 'react'
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView } from 'react-native'
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Alert } from 'react-native'
 
 import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import { ScrollView } from 'react-native-gesture-handler';
 import { set } from 'firebase/database';
 import LottieView from 'lottie-react-native';
+import {getAuth, signOut} from "firebase/auth";
+import * as SecureStore from 'expo-secure-store';
 
 
 
@@ -94,6 +96,7 @@ export default function SetProfile({navigation}){
         }
         getDatabase().then(()=>setLoading(false))
     }, [loading]);
+    
 
     const updateDatabase = () => {
         if(usernameInput === '' || displaynameInput === '' || weightInput === '' || ageInput === '' || genderInput === '' || goalsInput === ''){
@@ -121,6 +124,36 @@ export default function SetProfile({navigation}){
         }
         
     }
+
+    const deleteUser =()=>{
+        Alert.alert("WARNING", "Pressing OK will permanently delete this account",
+    [
+      {
+        text: "Cancel"
+      },
+      {
+        text: "OK",
+        onPress: ()=>confirmDelete()
+      }
+    ])
+    }
+    
+    function confirmDelete(){
+        currentUser.delete();
+        navigation.replace("Login")
+    }
+
+    async function SignOut(){
+        const auth = getAuth();
+        await SecureStore.deleteItemAsync("1");
+        await SecureStore.deleteItemAsync("2");
+        signOut(auth).then(() =>{
+            console.log("sign out successful")
+        }).catch((error) => {
+            alert("an error has occurred")
+        })
+    }
+
     if (loading) {
         //add splash
         return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
@@ -186,7 +219,19 @@ export default function SetProfile({navigation}){
                             style={styles.buttonContainer}
                         >
                             <Text style={styles.buttonText}>Save</Text>
-                        </TouchableOpacity>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={SignOut}
+                        style={styles.signOutButtonContainer}
+                    >
+                        <Text style={styles.buttonText}>Sign Out</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={deleteUser}
+                        style={styles.deleteAccountButtonContainer}
+                    >
+                        <Text style={styles.buttonText}>Delete Account</Text>
+                    </TouchableOpacity>
             </ScrollView>
                         
         </KeyboardAvoidingView>
@@ -227,15 +272,35 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 20,
-        backgroundColor: '#0782F9',
+        backgroundColor: '#00a1d0',
         padding: 15,
         borderRadius: 10,
         alignSelf: 'center',
-        marginBottom: 200
+    },
+    signOutButtonContainer: {
+        width: '60%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+        backgroundColor: '#f9050b',
+        padding: 15,
+        borderRadius: 10,
+        alignSelf: 'center',
     },
     buttonText: {
         color: 'white',
         fontWeight: '700',
         fontSize: 16,
     },
+    deleteAccountButtonContainer:{
+        width: '60%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+        backgroundColor: '#b90409',
+        padding: 15,
+        borderRadius: 10,
+        alignSelf: 'center',
+        marginBottom: 200
+    }
 })

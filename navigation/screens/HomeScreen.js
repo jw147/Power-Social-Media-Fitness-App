@@ -40,7 +40,9 @@ export default function HomeScreen({navigation}){
               source={require('../../assets/HomeScreen/progress.png')}
             />
           </Pressable>
+
         </ScrollView>
+            <Text style={styles.contactUs}>Contact Me: joshwan147@outlook.com</Text>
         </View>
   );
 }
@@ -133,6 +135,11 @@ const styles = StyleSheet.create({
     marginLeft: 225,
     marginTop: 6,
   },
+  contactUs:{
+    textAlign: 'center',
+    marginBottom: 10,
+    marginTop: 'auto'
+  }
 });
 
 //export default App;

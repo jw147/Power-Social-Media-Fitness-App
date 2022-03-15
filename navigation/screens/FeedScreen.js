@@ -98,6 +98,27 @@ export default function FeedScreen({navigation}){
                     })
                     setPosts(tempPosts);
                 })
+
+                var count = 0;
+                await firebase.firestore()
+                    .collection("dataCollection")
+                    .doc(currentUser.uid)
+                    .collection("counters").get()
+                    .then(docs=>{
+                        docs.forEach(doc=>{
+                            if(doc.id === "feed"){
+                                count = doc.data().count;
+                            }
+                        })
+                    firebase.firestore()
+                    .collection("dataCollection")
+                    .doc(currentUser.uid)
+                    .collection("counters")
+                    .doc("feed")
+                    .set({
+                        count: count + 0.5
+                    })
+                })
         }
         getDatabase().then(()=>setLoading(false))
             }, [loading]);

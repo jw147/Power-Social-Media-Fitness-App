@@ -1,5 +1,6 @@
 
-import { KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react'
 import { auth } from '../../firebase'
 import { useNavigation } from '@react-navigation/core'
@@ -7,6 +8,8 @@ import {getDatabase, ref, onValue, set} from 'firebase/database';
 import firebase from 'firebase/compat';
 import { initializeApp } from 'firebase/app';
 import 'firebase/compat/firestore';
+import {getAuth, setPersistence, signInWithEmailAndPassword, browserLocalPersistence} from 'firebase/auth'
+import * as SecureStore from 'expo-secure-store';
 
 
 const LoginScreen = () => {
@@ -15,15 +18,50 @@ const LoginScreen = () => {
 
     const navigation = useNavigation()
 
-    useEffect(() => {
+
+    // const firebaseConfig = {
+    //     apiKey: "AIzaSyD5isZ4nQY1WNtRZhP76l4mV0c8Ja7fgjc",
+    //     authDomain: "strength-in-numbers-61c20.firebaseapp.com",
+    //     databaseURL: "https://strength-in-numbers-61c20-default-rtdb.europe-west1.firebasedatabase.app",
+    //     projectId: "strength-in-numbers-61c20",
+    //     storageBucket: "strength-in-numbers-61c20.appspot.com",
+    //     messagingSenderId: "1048768070970",
+    //     appId: "1:1048768070970:web:c0c64c2a40e041203efc03",
+    //     measurementId: "G-Z03RMREVPS"
+    //   };
+
+    //const app = initializeApp(firebaseConfig)
+    //const a = getAuth(app)
+
+    useEffect( () => {
+        async function getValue(){
+            let resultE = await SecureStore.getItemAsync("1")
+            let resultP = await SecureStore.getItemAsync("2")
+            if(resultE && resultP){
+                auth
+                    .signInWithEmailAndPassword(resultE, resultP)
+                    .then(userCredentials => {
+                        const user = userCredentials.user;
+                        console.log('Logged in with: ', user.email);
+                    })
+                    .catch(error => alert(error.message))
+            }
+        }
+        getValue()
+        //await setPersistence(a, browserLocalPersistence);
         const unsubscribe = auth.onAuthStateChanged(user => {
             if (user) {
                 navigation.replace("strength in numbers")
             }
+            
         })
-
         return unsubscribe
     }, [])
+
+    async function save(e, p){
+        await SecureStore.setItemAsync("1", e);
+        await SecureStore.setItemAsync("2", p);
+    }
 
     const handleSignUp = () => {
         auth
@@ -41,6 +79,7 @@ const LoginScreen = () => {
                 })
                 .then(() => {
                     console.log('User Added');
+                    save(email, password)
                 })
             
         })
@@ -54,6 +93,7 @@ const LoginScreen = () => {
         .then(userCredentials => {
             const user = userCredentials.user;
             console.log('Logged in with: ', user.email);
+            save(email, password)
         })
         .catch(error => alert(error.message))
     }
