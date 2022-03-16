@@ -10,6 +10,7 @@ import { initializeApp } from 'firebase/app';
 import 'firebase/compat/firestore';
 import {getAuth, setPersistence, signInWithEmailAndPassword, browserLocalPersistence} from 'firebase/auth'
 import * as SecureStore from 'expo-secure-store';
+import LottieView from 'lottie-react-native';
 
 
 const LoginScreen = () => {
@@ -32,7 +33,7 @@ const LoginScreen = () => {
 
     //const app = initializeApp(firebaseConfig)
     //const a = getAuth(app)
-
+    const [checking, setChecking] = useState(true)
     useEffect( () => {
         async function getValue(){
             let resultE = await SecureStore.getItemAsync("1")
@@ -45,6 +46,8 @@ const LoginScreen = () => {
                         console.log('Logged in with: ', user.email);
                     })
                     .catch(error => alert(error.message))
+            }else{
+                setChecking(false)
             }
         }
         getValue()
@@ -97,7 +100,10 @@ const LoginScreen = () => {
         })
         .catch(error => alert(error.message))
     }
-
+    if (checking) {
+        //add splash
+        return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
+        } 
     return (
         <KeyboardAvoidingView
             style={styles.container}

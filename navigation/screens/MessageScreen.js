@@ -98,43 +98,77 @@ export default function MessageScreen({navigation}){
                     count: count + 0.5
                   })
               })
-            await firebase.firestore()
-                .collection('chatrooms')
-                .get()
-                .then((docs) => {
-                    let tempChatArray = [];
-                    let tempMessageArray = [];
-                    docs.forEach(doc => {
-                        if (doc.id.includes(currentUser.uid)) {
-                            tempChatArray.push(doc.id)
-                            firebase.firestore()
-                                .collection('chatrooms')
-                                .doc(doc.id)
-                                .collection('chats')
-                                .get()
-                                .then((docs) => {
-                                    let tempString = "";
+            // await firebase.firestore()
+            //     .collection('chatrooms')
+            //     .get()
+            //     .then((docs) => {
+            //         let tempChatArray = [];
+            //         let tempMessageArray = [];
+            //         docs.forEach(doc => {
+            //             if (doc.id.includes(currentUser.uid)) {
+            //                 tempChatArray.push(doc.id)
+            //                 firebase.firestore()
+            //                     .collection('chatrooms')
+            //                     .doc(doc.id)
+            //                     .collection('chats')
+            //                     .get()
+            //                     .then((docs) => {
+            //                         let tempString = "";
 
-                                    docs.forEach(doc => {
-                                        tempString = doc.data().message
-                                    })
-                                    if (tempString.length > 31) {
-                                        tempMessageArray.push(tempString.substring(0, 30) + "...")
+            //                         docs.forEach(doc => {
+            //                             tempString = doc.data().message
+            //                         })
+            //                         if (tempString.length > 31) {
+            //                             tempMessageArray.push(tempString.substring(0, 30) + "...")
 
-                                    } else {
-                                        tempMessageArray.push(tempString)
-                                    }
-                                    setMessageArray(tempMessageArray);
-                                });
-                        }
-                    })
-                    setChatArray(tempChatArray);
-                });
+            //                         } else {
+            //                             tempMessageArray.push(tempString)
+            //                         }
+            //                         setMessageArray(tempMessageArray);
+            //                     });
+            //             }
+            //         })
+            //         setChatArray(tempChatArray);
+            //     });
         }
         getDatabase().then(()=>setLoading(false))
     }, [loading]);
 
-                    
+        useEffect(()=>{
+            firebase.firestore()
+                    .collection('chatrooms')
+                    .onSnapshot((querySnapshot) => {
+                        let tempChatArray = [];
+                        let tempMessageArray = [];
+                        querySnapshot.forEach(doc => {
+                            if (doc.id.includes(currentUser.uid)) {
+                                tempChatArray.push(doc.id)
+                                firebase.firestore()
+                                    .collection('chatrooms')
+                                    .doc(doc.id)
+                                    .collection('chats')
+                                    .onSnapshot((querySnapshot) => {
+                                        let tempString = "";
+                                        let tA = [];
+                                        querySnapshot.forEach(doc => {
+                                            tA.push({message: doc.data().message, time: doc.data().time.seconds})
+                                        })
+                                        tA.sort((a, b) => b.time - a.time)
+                                        tempString = tA[0].message
+                                        if (tempString.length > 31) {
+                                            tempMessageArray.push(tempString.substring(0, 30) + "...")
+    
+                                        } else {
+                                            tempMessageArray.push(tempString)
+                                        }
+                                        setMessageArray(tempMessageArray);
+                                    });
+                            }
+                        })
+                        setChatArray(tempChatArray);
+                    });
+        }, [])                
+    
 
 
     function loadFriends(){

@@ -4,6 +4,7 @@ import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import LottieView from 'lottie-react-native';
+import { onSnapshot, QuerySnapshot } from 'firebase/firestore';
 
 export default function ChatScreen({route, navigation}){
   const date = new Date();
@@ -15,9 +16,11 @@ export default function ChatScreen({route, navigation}){
   let tempUserArray = [];
   let tempChatIndex = 0;
   let tempMessageArray = [];
+  let tempMessageID = [];
   const [chatRoom, setChatRoom] = useState("");
   const [chatIndex, setChatIndex] = useState(0);
   const [messageArray, setMessageArray] = useState([]);
+  const [messageID, setMessageID] = useState([]);
 
 
   // const getMessages = firebase.firestore()
@@ -31,28 +34,61 @@ export default function ChatScreen({route, navigation}){
   //     })
   //     setMessageArray(tempMessageArray);
   //   });
+  // const getMessages = firebase.firestore()
+  //                     .collection("chatrooms")
+  //                     .doc(userID.title)
+  //                     .collection("chats")
+  //                     .onSnapshot((querySnapshot) => {
+  //                       var tM = [];
+  //                       var ID = [...messageID]
+
+  //                       querySnapshot.forEach((doc) =>{
+  //                           ID.push(doc.id)
+  //                           tM.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time })
+  //                       })
+  //                       setMessageID(ID);
+  //                       setMessageArray(tM);
+  //                     })
 
     const [loading, setLoading] = useState(true)
   useEffect(() => {
     const getDatabase = async() =>{
-      await firebase.firestore()
-        .collection('chatrooms')
-        .doc(userID.title)
-        .collection('chats')
-        .get()
-        .then((docs) => {
-          docs.forEach(doc => {
-            tempMessageArray.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time })
-          })
-          setMessageArray(tempMessageArray);
-        });
+      // await firebase.firestore()
+      //   .collection('chatrooms')
+      //   .doc(userID.title)
+      //   .collection('chats')
+      //   .get()
+      //   .then((docs) => {
+      //     docs.forEach(doc => {
+      //       tempMessageID.push(doc.id)
+      //       tempMessageArray.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time })
+      //     })
+      //     setMessageID(tempMessageID);
+      //     setMessageArray(tempMessageArray);
+      //   });
+      firebase.firestore()
+                      .collection("chatrooms")
+                      .doc(userID.title)
+                      .collection("chats")
+                      .onSnapshot((querySnapshot) => {
+                        var tM = [];
+                        var ID = [...messageID]
+
+                        querySnapshot.forEach((doc) =>{
+                            ID.push(doc.id)
+                            tM.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time.seconds })
+                        })
+                        tM.sort((a, b) => a.time - b.time)
+                        setMessageID(ID);
+                        setMessageArray(tM);
+                      })
     }
-    getDatabase().then(()=>setLoading(false))
+    getDatabase()
     
         
 
     
-  }, [loading]);
+  }, []);
 
   function sendMessage(){
     //firebase here
@@ -64,34 +100,25 @@ export default function ChatScreen({route, navigation}){
     .set({
       message: message,
       sentBy: currentUser.uid,
-      time: String(date)
+      time: date
     })
     setChatIndex(chatIndex + 1)
     setMessage("");
     Keyboard.dismiss();
-    let t = [...messageArray]
-    t.push({message: message, sentBy: currentUser.uid, time: String(date)})
-    setMessageArray(t);
+    // let t = [...messageArray]
+    // t.push({message: message, sentBy: currentUser.uid, time: String(date)})
+    // setMessageArray(t);
   }
 
   function getChatLength(){
-    firebase.firestore()
-        .collection('chatrooms')
-        .doc(userID.title)
-        .collection('chats')
-        .get()
-        .then((docs) => {
-                docs.forEach(doc => {
-                    tempChatIndex++
-                })
-                setChatIndex(tempChatIndex)
-        });
+    var randomNumber = 1 + Math.random() * (2000 - 1);
+    setChatIndex(randomNumber)
   }
 
-  if (loading) {
-    //add splash
-    return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
-    } 
+  // if (loading) {
+  //   //add splash
+  //   return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
+  //   } 
     return (
       <KeyboardAvoidingView style={styles.container} keyboardVerticalOffset = "50" behavior={Platform.OS === "ios" ? "padding" : "height"}>
 

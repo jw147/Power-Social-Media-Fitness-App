@@ -4,6 +4,7 @@ import firebase from 'firebase/compat';
 import 'firebase/compat/firestore';
 import {storage, getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import LottieView from 'lottie-react-native';
+import { onSnapshot } from 'firebase/firestore';
 
 export default function ChatScreen({route, navigation}){
   const date = new Date();
@@ -20,17 +21,17 @@ export default function ChatScreen({route, navigation}){
   const [messageArray, setMessageArray] = useState([]);
 
 
-  const getMessages = firebase.firestore()
-    .collection('chatrooms')
-    .doc(currentUser.uid + chatRoom)
-    .collection('chats')
-    .get()
-    .then((docs) => {
-      docs.forEach(doc => {
-        tempMessageArray.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time })
-      })
-      setMessageArray(tempMessageArray);
-    });
+  // const getMessages = firebase.firestore()
+  //   .collection('chatrooms')
+  //   .doc(currentUser.uid + chatRoom)
+  //   .collection('chats')
+  //   .get()
+  //   .then((docs) => {
+  //     docs.forEach(doc => {
+  //       tempMessageArray.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time })
+  //     })
+  //     setMessageArray(tempMessageArray);
+  //   });
 
   const [loading, setLoading] = useState(true)
   useEffect(() => {
@@ -59,12 +60,32 @@ export default function ChatScreen({route, navigation}){
                   
           });
     }
+    
     getDatabase().then(()=>setLoading(false))
     
         
 
     
   }, [loading]);
+
+  useEffect(()=>{
+    const updateMessages = () => {
+      firebase.firestore()
+                      .collection("chatrooms")
+                      .doc(currentUser.uid+chatRoom)
+                      .collection("chats")
+                      .onSnapshot((querySnapshot) => {
+                        var tM = [];
+                        querySnapshot.forEach((doc) =>{
+                            tM.push({ message: doc.data().message, sentBy: doc.data().sentBy, time: doc.data().time.seconds })
+                        })
+                        tM.sort((a, b) => a.time - b.time)
+                        setMessageArray(tM);
+                      })
+    }
+    updateMessages()
+  }, [])
+
   function sendMessage(){
     
 
@@ -83,7 +104,7 @@ export default function ChatScreen({route, navigation}){
     .set({
       message: message,
       sentBy: currentUser.uid,
-      time: String(date)
+      time: date
     })
     setChatIndex(chatIndex + 1)
     setMessage("");
@@ -94,18 +115,10 @@ export default function ChatScreen({route, navigation}){
   }
 
   function getChatLength(){
-    firebase.firestore()
-        .collection('chatrooms')
-        .doc(currentUser.uid+chatRoom)
-        .collection('chats')
-        .get()
-        .then((docs) => {
-                docs.forEach(doc => {
-                    tempChatIndex++
-                })
-                setChatIndex(tempChatIndex)
-        });
+    var randomNumber = 1 + Math.random() * (2000 - 1);
+    setChatIndex(randomNumber)
   }
+
   if (loading) {
     //add splash
     return (<LottieView source={require('../../loadingAnimation.json')} autoPlay loop />)
