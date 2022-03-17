@@ -193,6 +193,9 @@ export default function ExerciseScreen({ navigation }) {
     tempSet = [];
     tempSetWeight = [];
     tempSetReps = [];
+    tempSetEx = [];
+    tempSetSets = [];
+    customWeightEx = [];
     count = 0;
     //addWorkoutTitleDB()
     setAddSet([]);
@@ -581,6 +584,9 @@ export default function ExerciseScreen({ navigation }) {
     tempSet=[]
     tempSetReps=[]
     tempSetWeight=[]
+    tempSetEx = [];
+    tempSetSets = [];
+    customWeightEx = [];
     setAddSet(tempSet);
     setAddExercise(tempSet);
     distance = 0;
