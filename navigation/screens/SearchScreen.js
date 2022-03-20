@@ -56,6 +56,7 @@ export default function SearchScreen({navigation}){
                 
                     docs.forEach(doc => {
                         if (doc.id != currentUser.uid) {
+                            console.log(doc.data().displayName)
                             if(t.includes(doc.id) === false){
 
                                 t.push(doc.id)

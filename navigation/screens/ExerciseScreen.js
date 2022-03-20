@@ -197,6 +197,7 @@ export default function ExerciseScreen({ navigation }) {
     tempSetSets = [];
     customWeightEx = [];
     count = 0;
+    calories = 0;
     //addWorkoutTitleDB()
     setAddSet([]);
     setAddExercise([]);
@@ -336,11 +337,11 @@ export default function ExerciseScreen({ navigation }) {
       setSelectHidden(false);
       setWeightsHidden(true);
       setValue([]);
-      calories = 0;
-      tempSetEx = [];
-      tempSetReps = [];
-      tempSetWeight = [];
-      tempSetSets = [];
+      // calories = 0;
+      // tempSetEx = [];
+      // tempSetReps = [];
+      // tempSetWeight = [];
+      // tempSetSets = [];
     }
   }
   function rewards(tW, tC, tD){
@@ -1490,6 +1491,11 @@ function postCardio(cName, dis, time, cal){
     
   }
 
+  function openExercises(){
+    setModalVisible(true)
+    customWeightEx[0] = ""
+  }
+
   return (
     <View style={styles.container}>
       <HideView hide={selectHidden}>
@@ -1620,7 +1626,7 @@ function postCardio(cName, dis, time, cal){
             </View>
           </Modal>
           <Pressable style={styles.addExerciseButton}
-            onPress={()=> setModalVisible(true)}>
+            onPress={()=> openExercises()}>
             <Text style={{ color: 'white' }}>Add Exercise</Text>
           </Pressable>
           <TextInput style={styles.workoutTime} placeholder="Workout Duration (Minutes)" value={workoutTime} onChangeText={text=>workoutTime=text} returnKeyType={'done'} keyboardType='number-pad'></TextInput>
